@@ -1,6 +1,9 @@
 import sbt._
 import Keys._
 import com.typesafe.sbt.packager.Keys._
+import com.typesafe.sbt.SbtNativePackager._
+import com.typesafe.sbt.packager.archetypes.ServerLoader
+import NativePackagerKeys._
 
 
 // This is the top level build object used by sbt.
@@ -11,7 +14,10 @@ object Build extends Build {
 
   lazy val hardware = project
     .settings(packageSettings: _*)
-    .settings(libraryDependencies ++=
+    .settings(mappings in Universal <+= (packageBin in Compile, sourceDirectory) map { (_, src) =>
+    val conf = src / "main" / "resources" / "log.properties"
+    conf -> "bin/log.properties"
+  }).settings(libraryDependencies ++=
     provided(akkaActor) ++
       compile(bcpkix, bcprov, commonsLogging, httpclient, httpcore, httpcoreNio, log4j) ++
       test(scalaTest)
@@ -27,7 +33,10 @@ object Build extends Build {
 
   lazy val container2 = project
     .settings(packageSettings: _*)
-    .settings(libraryDependencies ++=
+    .settings(mappings in Universal <+= (packageBin in Compile, sourceDirectory) map { (_, src) =>
+    val conf = src / "main" / "resources" / "log.properties"
+    conf -> "bin/log.properties"
+  }).settings(libraryDependencies ++=
     provided(akkaActor) ++
       compile(akkaKernel, akkaRemote, pkg)
     ).dependsOn(hardware)

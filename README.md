@@ -34,7 +34,7 @@ the generated CSS file will not be found and the web app will not display proper
 
 To run the demo: Open terminal windows or tabs in these directories and run these commands:
 
-* cd hardware/target/universal/stage/bin; ./hardware
+* cd hardware/target/universal/stage/bin; ./hardware -Dlog4j.configuration=log.properties
 
 Start the location service (This has to be running before any HCDs or assemblies are started):
 
@@ -42,7 +42,7 @@ Start the location service (This has to be running before any HCDs or assemblies
 
 Then start the two Akka containers (The order is not important here):
 
-* cd container2/target/universal/stage/bin; ./container2
+* cd container2/target/universal/stage/bin; ./container2 -Dlog4j.configuration=log.properties
 * cd container1/target/universal/stage/bin; ./container1
 
 * open http://localhost:8089 in a browser for the Ext JS version and select the development
