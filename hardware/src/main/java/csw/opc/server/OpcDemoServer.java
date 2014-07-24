@@ -37,20 +37,9 @@ import com.prosysopc.ua.types.opcua.server.BuildInfoTypeNode;
  */
 public class OpcDemoServer {
 
-    /**
-     * Number of nodes to create for the Big Node Manager. This can be modified
-     * from the command line.
-     */
     private static Logger logger = Logger.getLogger(OpcDemoServer.class);
     protected static String APP_NAME = "OpcDemoServer";
 
-    /**
-     * @param args command line arguments for the application
-     * @throws StatusException      if the server address space creation fails
-     * @throws UaServerException    if the server initialization parameters are invalid
-     * @throws CertificateException if the application certificate or private key, cannot be
-     *                              loaded from the files due to certificate errors
-     */
     public static void main(String[] args) throws Exception {
         // Initialize log4j logging
         PropertyConfigurator.configureAndWatch(OpcDemoServer.class.getResource("/log.properties").getFile(), 5000);
@@ -74,18 +63,6 @@ public class OpcDemoServer {
 
     protected final CertificateValidationListener validationListener = new OpcDemoCertificateValidationListener();
 
-    /**
-     * Create a sample address space with a new folder, a device object, a level
-     * variable, and an alarm condition.
-     * <p/>
-     * The method demonstrates the basic means to create the nodes and
-     * references into the address space.
-     *
-     * @throws StatusException          if the referred type nodes are not found from the address
-     *                                  space
-     * @throws UaInstantiationException
-     * @throws NodeBuilderException
-     */
     protected void createAddressSpace() throws StatusException,
             UaInstantiationException, NodeBuilderException {
 
@@ -100,9 +77,6 @@ public class OpcDemoServer {
         logger.info("Address space created.");
     }
 
-    /**
-     * Initialize the information to the Server BuildInfo structure
-     */
     protected void initBuildInfo() {
         // Initialize BuildInfo - using the version info from the SDK
         // XXX TODO You should replace this with your own build information
@@ -169,41 +143,15 @@ public class OpcDemoServer {
         // optional server name part of the URI (default for all protocols)
         server.setServerName("OPCUA/" + applicationName);
 
-        // Optionally restrict the InetAddresses to which the server is bound.
-        // You may also specify the addresses for each Protocol.
-        // This is the default:
         server.setBindAddresses(EndpointUtil.getInetAddresses());
 
         // *** Certificates
 
         File privatePath = new File(validator.getBaseDir(), "private");
 
-        // Define a certificate for a Certificate Authority (CA) which is used
-        // to issue the keys. Especially
-        // the HTTPS certificate should be signed by a CA certificate, in order
-        // to make the .NET applications trust it.
-        //
-        // If you have a real CA, you should use that instead of this sample CA
-        // and create the keys with it.
-        // Here we use the IssuerCertificate only to sign the HTTPS certificate
-        // (below) and not the Application Instance Certificate.
         KeyPair issuerCertificate = ApplicationIdentity
                 .loadOrCreateIssuerCertificate("ProsysSampleCA", privatePath,
                         "opcua", 3650, false);
-
-        // If you wish to use big certificates (4096 bits), you will need to
-        // define two certificates for your application, since to interoperate
-        // with old applications, you will also need to use a small certificate
-        // (up to 2048 bits).
-
-        // Also, 4096 bits can only be used with Basic256Sha256 security
-        // profile, which is currently not enabled by default, so we will also
-        // leave the the keySizes array as null. In that case, the default key
-        // size defined by CertificateUtils.getKeySize() is used.
-
-        // Use 0 to use the default keySize and default file names as before
-        // (for other values the file names will include the key size).
-        // keySizes = new int[] { 0, 4096 };
 
         // *** Application Identity
 
