@@ -1,4 +1,4 @@
-package csw.opcDemo.container1
+package csw.opc.container1
 
 import akka.actor.Props
 import csw.services.pkg.Assembly
@@ -25,9 +25,9 @@ case class Assembly1(name: String)
   // Define the HCDs we want to use
   val serviceIds = List(
     ServiceId("HCD-2A", ServiceType.HCD),
-    ServiceId("HCD-2B", ServiceType.HCD),
-    ServiceId("HCD-2C", ServiceType.HCD),
-    ServiceId("HCD-2D", ServiceType.HCD)
+    ServiceId("HCD-2B", ServiceType.HCD)
+//    ServiceId("HCD-2C", ServiceType.HCD),
+//    ServiceId("HCD-2D", ServiceType.HCD)
   )
   requestServices(serviceIds)
   startHttpServer()

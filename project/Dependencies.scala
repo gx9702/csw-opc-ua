@@ -22,6 +22,8 @@ object Dependencies {
   val scalaLogging   = "com.typesafe.scala-logging"    %% "scala-logging-slf4j"   % "2.1.2"
   val logback        = "ch.qos.logback"                 % "logback-classic"       % "1.1.1"
 
+  val scalaTest      = "org.scalatest"                 %% "scalatest"             % "2.1.5"
+
   val sprayCan       = "io.spray"                      %% "spray-can"             % sprayVersion
   val sprayClient    = "io.spray"                      %% "spray-client"          % sprayVersion
   val sprayRouting   = "io.spray"                      %% "spray-routing"         % sprayVersion

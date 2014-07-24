@@ -1,4 +1,4 @@
-package csw.opcDemo.container2
+package csw.opc.container2
 
 import akka.actor._
 import csw.services.pkg.Container
@@ -25,12 +25,12 @@ class Container2Actor extends Actor with ActorLogging {
   val hcd2aProps = Hcd2.props("HCD-2A", "tmt.mobie.blue.filter")
   val hcd2bProps = Hcd2.props("HCD-2B", "tmt.mobie.blue.disperser")
 
-  // For the Play Framework Demo
-  val hcd2cProps = Hcd2.props("HCD-2C", "tmt.tel.base.pos")
-  val hcd2dProps = Hcd2.props("HCD-2D", "tmt.tel.ao.pos.one")
+//  // For the Play Framework Demo
+//  val hcd2cProps = Hcd2.props("HCD-2C", "tmt.tel.base.pos")
+//  val hcd2dProps = Hcd2.props("HCD-2D", "tmt.tel.ao.pos.one")
 
   container ! Container.CreateComponent(hcd2aProps, "HCD-2A")
   container ! Container.CreateComponent(hcd2bProps, "HCD-2B")
-  container ! Container.CreateComponent(hcd2cProps, "HCD-2C")
-  container ! Container.CreateComponent(hcd2dProps, "HCD-2D")
+//  container ! Container.CreateComponent(hcd2cProps, "HCD-2C")
+//  container ! Container.CreateComponent(hcd2dProps, "HCD-2D")
 }

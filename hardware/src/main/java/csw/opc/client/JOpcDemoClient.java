@@ -1,14 +1,16 @@
-package csw.opcDemo.client;
+package csw.opc.client;
 
 import com.prosysopc.ua.*;
 import com.prosysopc.ua.UaApplication.Protocol;
 import com.prosysopc.ua.client.*;
 import com.prosysopc.ua.nodes.*;
-import csw.opcDemo.server.OpcDemoNodeManager;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.opcfoundation.ua.builtintypes.*;
+import org.opcfoundation.ua.common.ServiceResultException;
 import org.opcfoundation.ua.core.*;
+import org.opcfoundation.ua.transport.AsyncResult;
+import org.opcfoundation.ua.transport.ResultListener;
 import org.opcfoundation.ua.transport.security.HttpsSecurityPolicy;
 import org.opcfoundation.ua.transport.security.SecurityMode;
 
@@ -24,25 +26,10 @@ import java.util.*;
 public class JOpcDemoClient {
 
     private static String APP_NAME = "OpcDemoClient";
-    private static Logger logger = Logger.getLogger(JOpcDemoClient.class);
-
-    public static void main(String[] args) throws Exception {
-        // Load Log4j configurations from external file
-        PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("../log.properties").getFile(), 5000);
-        JOpcDemoClient opcDemoClient = new JOpcDemoClient();
-        opcDemoClient.initialize();
-
-        logger.info("filter initial value: " + opcDemoClient.readFilter());
-        opcDemoClient.writeFilter(2);
-        logger.info("XXX filter value after set to 2: " + opcDemoClient.readFilter());
-
-        logger.info("XXX disperser initial value: " + opcDemoClient.readDisperser());
-        opcDemoClient.writeDisperser(3);
-        logger.info("XXX disperser value after set to 3: " + opcDemoClient.readDisperser());
-    }
+    private static Logger log = Logger.getLogger(JOpcDemoClient.class);
 
     private static void printException(Exception e) {
-        println(e.toString());
+        log.info(e.toString());
         if (e instanceof MethodCallStatusException) {
             MethodCallStatusException me = (MethodCallStatusException) e;
             final StatusCode[] results = me.getInputArgumentResults();
@@ -50,20 +37,16 @@ public class JOpcDemoClient {
                 for (int i = 0; i < results.length; i++) {
                     StatusCode s = results[i];
                     if (s.isBad()) {
-                        println("Status for Input #" + i + ": " + s);
+                        log.info("Status for Input #" + i + ": " + s);
                         DiagnosticInfo d = me
                                 .getInputArgumentDiagnosticInfos()[i];
                         if (d != null)
-                            println("  DiagnosticInfo:" + i + ": " + d);
+                            log.info("  DiagnosticInfo:" + i + ": " + d);
                     }
                 }
         }
         if (e.getCause() != null)
-            println("Caused by: " + e.getCause());
-    }
-
-    private static void println(String string) {
-        System.out.println(string);
+            log.info("Caused by: " + e.getCause());
     }
 
     private UaClient client;
@@ -79,7 +62,7 @@ public class JOpcDemoClient {
         public void onStateChange(UaClient uaClient, ServerState oldState, ServerState newState) {
             System.out.printf("ServerState changed from %s to %s\n", oldState, newState);
             if (newState.equals(ServerState.Unknown))
-                System.out.println("ServerStatusError: " + uaClient.getServerStatusError());
+                log.info("ServerStatusError: " + uaClient.getServerStatusError());
         }
 
         @Override
@@ -93,7 +76,7 @@ public class JOpcDemoClient {
 
         @Override
         public void onAlive(Subscription s) {
-            System.out.println(String.format(
+            log.info(String.format(
                     "%tc Subscription alive: ID=%d lastAlive=%tc",
                     Calendar.getInstance(), s.getSubscriptionId().getValue(),
                     s.getLastAlive()));
@@ -101,7 +84,7 @@ public class JOpcDemoClient {
 
         @Override
         public void onTimeout(Subscription s) {
-            System.out.println(String.format(
+            log.info(String.format(
                     "%tc Subscription timeout: ID=%d lastAlive=%tc",
                     Calendar.getInstance(), s.getSubscriptionId().getValue(),
                     s.getLastAlive()));
@@ -112,7 +95,7 @@ public class JOpcDemoClient {
 
         @Override
         public void onBufferOverflow(Subscription subscription, UnsignedInteger sequenceNumber, ExtensionObject[] notificationData) {
-            System.out.println("*** SUBCRIPTION BUFFER OVERFLOW ***");
+            log.info("*** SUBCRIPTION BUFFER OVERFLOW ***");
         }
 
         @Override
@@ -131,7 +114,7 @@ public class JOpcDemoClient {
 
         @Override
         public long onMissingData(UnsignedInteger lastSequenceNumber, long sequenceNumber, long newSequenceNumber, StatusCode serviceResult) {
-            System.out.println("Data missed: lastSequenceNumber=" + lastSequenceNumber + " newSequenceNumber=" + newSequenceNumber);
+            log.info("Data missed: lastSequenceNumber=" + lastSequenceNumber + " newSequenceNumber=" + newSequenceNumber);
             return newSequenceNumber; // Accept the default
         }
 
@@ -144,8 +127,11 @@ public class JOpcDemoClient {
         }
     };
 
+    private NodeId deviceNodeId = null;
     private NodeId filterNodeId = null;
     private NodeId disperserNodeId = null;
+    private NodeId setFilterNodeId = null;
+    private NodeId setDisperserNodeId = null;
 
     public JOpcDemoClient() {
     }
@@ -159,7 +145,7 @@ public class JOpcDemoClient {
         if (!client.isConnected())
             try {
                 if (client.getProtocol() == Protocol.Https)
-                    println("Using HttpsSecurityPolicies "
+                    log.info("Using HttpsSecurityPolicies "
                             + Arrays.toString(client.getHttpsSettings()
                             .getHttpsSecurityPolicies()));
                 else {
@@ -167,7 +153,7 @@ public class JOpcDemoClient {
                             .getSecurityMode().getSecurityPolicy()
                             .getPolicyUri()
                             : client.getEndpoint().getSecurityPolicyUri();
-                    println("Using SecurityPolicy " + securityPolicy);
+                    log.info("Using SecurityPolicy " + securityPolicy);
                 }
 
                 // We can define the session name that is visible in the server as well
@@ -175,7 +161,7 @@ public class JOpcDemoClient {
 
                 client.connect();
                 try {
-                    println("ServerStatus: " + client.getServerStatus());
+                    log.info("ServerStatus: " + client.getServerStatus());
                 } catch (StatusException ex) {
                     printException(ex);
                 }
@@ -192,7 +178,7 @@ public class JOpcDemoClient {
             ServerListException {
 
         String serverUri = "opc.tcp://localhost:52520/OPCUA/OpcDemoServer";
-        println("Connecting to " + serverUri);
+        log.info("Connecting to " + serverUri);
 
         // *** Create the UaClient
         client = new UaClient(serverUri);
@@ -222,7 +208,7 @@ public class JOpcDemoClient {
         final ApplicationIdentity identity = ApplicationIdentity
                 .loadOrCreateCertificate(appDescription, "Sample Organisation",
                 /* Private Key Password */"opcua",
-				/* Key File Path */privatePath,
+                /* Key File Path */privatePath,
 				/* CA certificate & private key */null,
 				/* Key Sizes for instance certificates to create */null,
 				/* Enable renewing the certificate */true);
@@ -267,18 +253,35 @@ public class JOpcDemoClient {
 
         connect();
 
-        // XXX Allan: Could link server jar and use constants?
-        int ns = client.getAddressSpace().getNamespaceTable().getIndex(OpcDemoNodeManager.NAMESPACE);
-        filterNodeId = new NodeId(ns, "FilterIndex");
-        disperserNodeId = new NodeId(ns, "DisperserIndex");
+        String namespace = "http://www.tmt.org/opcua/demoAddressSpace"; // OpcDemoNodeManager.NAMESPACE
+        int ns = client.getAddressSpace().getNamespaceTable().getIndex(namespace);
+        deviceNodeId = new NodeId(ns, "OpcDemoDevice");
+        filterNodeId = new NodeId(ns, "Filter");
+        disperserNodeId = new NodeId(ns, "Disperser");
+        setFilterNodeId = new NodeId(ns, "setFilter");
+        setDisperserNodeId = new NodeId(ns, "setDisperser");
 
         subscribe(filterNodeId);
         subscribe(disperserNodeId);
     }
 
 
+    protected void callMethod(NodeId methodId, String value)
+            throws ServiceException, ServerConnectionException,
+            AddressSpaceException, MethodArgumentException, StatusException {
+        Variant[] inputs = new Variant[]{new Variant(value)};
+        client.call(deviceNodeId, methodId, inputs);
+    }
+
+    protected AsyncResult callMethodAsync(NodeId methodId, String value)
+            throws ServiceException, ServerConnectionException, AddressSpaceException, MethodArgumentException, StatusException {
+        Variant[] inputs = new Variant[]{new Variant(value)};
+        return client.callAsync(new CallMethodRequest(deviceNodeId, methodId, inputs));
+    }
+
+
     private void subscribe(NodeId nodeId) {
-        println("*** Subscribing to node: " + nodeId);
+        log.info("*** Subscribing to node: " + nodeId);
         try {
             // Create the subscription
             Subscription subscription = createSubscription();
@@ -306,7 +309,7 @@ public class JOpcDemoClient {
     }
 
     private void createMonitoredItem(Subscription sub, NodeId nodeId,
-                                       UnsignedInteger attributeId) throws ServiceException, StatusException {
+                                     UnsignedInteger attributeId) throws ServiceException, StatusException {
         UnsignedInteger monitoredItemId = null;
         // Create the monitored item, if it is not already in the subscription
         if (!sub.hasItem(nodeId, attributeId)) {
@@ -316,7 +319,7 @@ public class JOpcDemoClient {
             sub.addItem(dataItem);
             monitoredItemId = dataItem.getMonitoredItemId();
         }
-        println("Subscription: Id=" + sub.getSubscriptionId() + " ItemId=" + monitoredItemId);
+        log.info("Subscription: Id=" + sub.getSubscriptionId() + " ItemId=" + monitoredItemId);
     }
 
     private MonitoredDataItem createMonitoredDataItem(final NodeId nodeId, UnsignedInteger attributeId) {
@@ -325,62 +328,68 @@ public class JOpcDemoClient {
             @Override
             public void onDataChange(MonitoredDataItem sender, DataValue prevValue, DataValue value) {
                 String s = (nodeId == filterNodeId) ? "filter" : "disperser";
-                System.out.println("XXX onDataChange " + s + " changed to " + value.getValue());
+                log.info("onDataChange " + s + " changed to " + value.getValue());
             }
         });
         return dataItem;
     }
 
-    private int read(NodeId nodeId) throws ServiceException, StatusException {
+    private String read(NodeId nodeId) throws ServiceException, StatusException {
         UnsignedInteger attributeId = Attributes.Value;
         DataValue value = client.readAttribute(nodeId, attributeId);
-        return value.getValue().intValue();
+        return value.getValue().toString();
     }
 
-    private void write(NodeId nodeId, Integer value)
-            throws ServiceException, AddressSpaceException, StatusException {
 
-        UnsignedInteger attributeId = Attributes.Value;
-        UaNode node = client.getAddressSpace().getNode(nodeId);
-        println("Writing to node " + nodeId + " - "
-                + node.getDisplayName().getText());
-
-        // Find the DataType if setting Value - for other properties you must
-        // find the correct data type yourself
-        UaDataType dataType;
-        if (attributeId.equals(Attributes.Value) && (node instanceof UaVariable)) {
-            UaVariable v = (UaVariable) node;
-            // Initialize DataType node, if it is not initialized yet
-            if (v.getDataType() == null)
-                v.setDataType(client.getAddressSpace().getType(v.getDataTypeId()));
-            dataType = (UaDataType) v.getDataType();
-            println("DataType: " + dataType.getDisplayName().getText());
-        }
-
-        try {
-            boolean status = client.writeAttribute(nodeId, attributeId, value);
-            if (status)
-                println("OK");
-            else
-                println("OK (completes asynchronously)");
-        } catch (ServiceException | StatusException e) {
-            printException(e);
-        }
-    }
-
-    public int readFilter() throws ServiceException, StatusException {
+    public String getFilter() throws ServiceException, StatusException {
         return read(filterNodeId);
     }
 
-    public void writeFilter(int value) throws ServiceException, AddressSpaceException, StatusException {
-        write(filterNodeId, value);
-    }
-
-    public int readDisperser() throws ServiceException, StatusException {
+    public String getDisperser() throws ServiceException, StatusException {
         return read(disperserNodeId);
     }
 
-    public void writeDisperser(int value) throws ServiceException, AddressSpaceException, StatusException {
-        write(disperserNodeId, value);
+    public void setFilter(String filter) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
+        callMethod(setFilterNodeId, filter);
+    }
+
+    public void setDisperser(String disperser) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
+        callMethod(setDisperserNodeId, disperser);
+    }
+
+    public AsyncResult setFilterAsync(String filter) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
+        return callMethodAsync(setFilterNodeId, filter);
+    }
+
+    public AsyncResult setDisperserAsync(String disperser) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
+        return callMethodAsync(setDisperserNodeId, disperser);
+    }
+
+    // Demo main
+    public static void demoMain(String[] args) throws Exception {
+        // Load Log4j configurations from external file
+        PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("/log.properties").getFile(), 5000);
+        final JOpcDemoClient client = new JOpcDemoClient();
+        client.initialize();
+
+        client.setFilter("NewFilter");
+        client.setDisperser("NewDisperser");
+
+        AsyncResult result = client.setFilterAsync("NewFilter2");
+        result.setListener(new ResultListener() {
+            @Override
+            public void onCompleted(Object o) {
+                try {
+                    log.info("filter changed (async) to: " + client.getFilter());
+                } catch (ServiceException | StatusException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            @Override
+            public void onError(ServiceResultException e) {
+                log.error("Error setting filter (async)", e);
+            }
+        });
     }
 }

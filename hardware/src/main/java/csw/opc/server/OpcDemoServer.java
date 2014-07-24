@@ -1,4 +1,4 @@
-package csw.opcDemo.server;
+package csw.opc.server;
 
 import java.io.File;
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class OpcDemoServer {
      */
     public static void main(String[] args) throws Exception {
         // Initialize log4j logging
-        PropertyConfigurator.configureAndWatch(OpcDemoServer.class.getResource("../log.properties").getFile(), 5000);
+        PropertyConfigurator.configureAndWatch(OpcDemoServer.class.getResource("/log.properties").getFile(), 5000);
 
         // *** Initialization and Start Up
         OpcDemoServer opcDemoServer = new OpcDemoServer();

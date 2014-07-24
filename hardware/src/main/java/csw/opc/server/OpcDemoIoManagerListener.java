@@ -1,4 +1,4 @@
-package csw.opcDemo.server;
+package csw.opc.server;
 
 import com.prosysopc.ua.StatusException;
 import com.prosysopc.ua.WriteAccess;
@@ -85,14 +85,6 @@ public class OpcDemoIoManagerListener implements IoManagerListener {
                 + (node != null ? " node=" + node.getBrowseName() : "")
                 + (indexRange != null ? " indexRange=" + indexRange : "")
                 + " value=" + dataValue);
-
-        // XXX simulate delay
-        try {
-            Thread.sleep(5000);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-
         return false;
     }
 }

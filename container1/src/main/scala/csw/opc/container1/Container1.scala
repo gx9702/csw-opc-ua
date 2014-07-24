@@ -1,4 +1,4 @@
-package csw.opcDemo.container1
+package csw.opc.container1
 
 import akka.actor._
 import csw.services.pkg.Container

@@ -1,4 +1,4 @@
-package csw.opcDemo.server;
+package csw.opc.server;
 
 import java.util.List;
 

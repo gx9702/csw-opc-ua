@@ -1,4 +1,4 @@
-package csw.opcDemo.container2
+package csw.opc.container2
 
 import akka.actor.Props
 import csw.services.pkg.Hcd
@@ -13,7 +13,7 @@ object Hcd2 {
 case class Hcd2(name: String, configPath: String) extends Hcd with CommandServiceActor with OneAtATimeCommandQueueController {
 
   val configKey = configPath.split('.').last
-  override val configActor = context.actorOf(TestConfigActor.props(commandStatusActor, configKey, 3), name)
+  override val configActor = context.actorOf(TestConfigActor.props(commandStatusActor, configKey), name)
 
   // Register with the location service (which must be started as a separate process)
   registerWithLocationService(ServiceId(name, ServiceType.HCD), Some(configPath))

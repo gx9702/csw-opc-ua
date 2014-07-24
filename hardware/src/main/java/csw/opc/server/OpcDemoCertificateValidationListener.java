@@ -1,4 +1,4 @@
-package csw.opcDemo.server;
+package csw.opc.server;
 
 import java.security.cert.CertificateParsingException;
 import java.util.EnumSet;

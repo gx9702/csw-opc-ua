@@ -1,21 +1,19 @@
-package csw.opcDemo.client
+package csw.opc.client
 
 import com.prosysopc.ua._
 import com.prosysopc.ua.client._
-import com.prosysopc.ua.nodes._
-import csw.opcDemo.server.OpcDemoNodeManager
 import org.apache.log4j.{PropertyConfigurator, Logger}
 import org.opcfoundation.ua.builtintypes._
+import org.opcfoundation.ua.common.ServiceResultException
 import org.opcfoundation.ua.core._
+import org.opcfoundation.ua.transport.{ResultListener, AsyncResult}
 import org.opcfoundation.ua.transport.security.HttpsSecurityPolicy
 import org.opcfoundation.ua.transport.security.SecurityMode
 import java.io.File
 import java.net.InetAddress
 import java.util._
 
-import scala.concurrent.Future
-
-class OpcDemoClient {
+case class OpcDemoClient(listener: OpcDemoClient.Listener) {
   val APP_NAME = "OpcDemoClient"
   val log = Logger.getLogger(classOf[OpcDemoClient])
 
@@ -33,7 +31,7 @@ class OpcDemoClient {
     }
   }
 
-  val subscriptionAliveListener: SubscriptionAliveListener = new SubscriptionAliveListener {
+  val subscriptionAliveListener = new SubscriptionAliveListener {
     def onAlive(s: Subscription) {
     }
 
@@ -42,7 +40,7 @@ class OpcDemoClient {
     }
   }
 
-  val subscriptionListener: SubscriptionNotificationListener = new SubscriptionNotificationListener {
+  val subscriptionListener = new SubscriptionNotificationListener {
     def onBufferOverflow(subscription: Subscription, sequenceNumber: UnsignedInteger, notificationData: Array[ExtensionObject]) {
       log.error("Subscription buffer overflow")
     }
@@ -69,14 +67,18 @@ class OpcDemoClient {
     }
   }
 
-  val client: UaClient = initialize()
+  val client = initialize()
   connect()
 
   // XXX FIXME do this in a handler whenever connected
-  val uri = OpcDemoNodeManager.NAMESPACE
+//  val uri = OpcDemoNodeManager.NAMESPACE
+  val uri = "http://www.tmt.org/opcua/demoAddressSpace"
   val ns = client.getAddressSpace.getNamespaceTable.getIndex(uri)
-  val filterNodeId = new NodeId(ns, "FilterIndex")
-  val disperserNodeId = new NodeId(ns, "DisperserIndex")
+  val deviceNodeId = new NodeId(ns, "OpcDemoDevice")
+  val filterNodeId = new NodeId(ns, "Filter")
+  val disperserNodeId = new NodeId(ns, "Disperser")
+  val setFilterNodeId = new NodeId(ns, "setFilter")
+  val setDisperserNodeId = new NodeId(ns, "setDisperser")
   subscribe(filterNodeId)
   subscribe(disperserNodeId)
 
@@ -85,20 +87,20 @@ class OpcDemoClient {
    * Initializes the object, must be called after constructor
    */
   private def initialize(): UaClient = {
-    val serverUri: String = "opc.tcp://localhost:52520/OPCUA/OpcDemoServer"
-    println("Connecting to " + serverUri)
+    val serverUri = "opc.tcp://localhost:52520/OPCUA/OpcDemoServer"
+    log.info("Connecting to " + serverUri)
     val uaClient = new UaClient(serverUri)
-    val validator: PkiFileBasedCertificateValidator = new PkiFileBasedCertificateValidator
+    val validator = new PkiFileBasedCertificateValidator
     uaClient.setCertificateValidator(validator)
-    val appDescription: ApplicationDescription = new ApplicationDescription
+    val appDescription = new ApplicationDescription
     appDescription.setApplicationName(new LocalizedText(APP_NAME, Locale.ENGLISH))
     appDescription.setApplicationUri("urn:localhost:UA:OpcDemoClient")
     appDescription.setProductUri("urn:prosysopc.com:UA:OpcDemoClient")
     appDescription.setApplicationType(ApplicationType.Client)
-    val privatePath: File = new File(validator.getBaseDir, "private")
+    val privatePath = new File(validator.getBaseDir, "private")
     val identity: ApplicationIdentity = ApplicationIdentity.loadOrCreateCertificate(appDescription,
       "Sample Organisation", "opcua", privatePath, null, null, true)
-    val hostName: String = InetAddress.getLocalHost.getHostName
+    val hostName = InetAddress.getLocalHost.getHostName
     identity.setHttpsCertificate(ApplicationIdentity.loadOrCreateHttpsCertificate(appDescription,
       hostName, "opcua", null, privatePath, true))
     uaClient.setApplicationIdentity(identity)
@@ -118,7 +120,7 @@ class OpcDemoClient {
   /**
    * Connect to the server.
    */
-  private def connect(): Unit = {
+  private def connect(): Unit =
     if (!client.isConnected) try {
       client.setSessionName(APP_NAME)
       client.connect()
@@ -126,22 +128,28 @@ class OpcDemoClient {
     } catch {
       case ex: Exception => log.error("connect", ex)
     }
-  }
 
-  private def subscribe(nodeId: NodeId) {
-    println("*** Subscribing to node: " + nodeId)
+
+  private def callMethod(methodId: NodeId, value: String): Unit =
+    client.call(deviceNodeId, methodId, new Variant(value))
+
+  private def callMethodAsync(methodId: NodeId, value: String): AsyncResult =
+    client.callAsync(new CallMethodRequest(deviceNodeId, methodId, Array(new Variant(value))))
+
+
+  private def subscribe(nodeId: NodeId): Unit =
     try {
-      val subscription: Subscription = createSubscription
+      val subscription = createSubscription
       createMonitoredItem(subscription, nodeId, Attributes.Value)
     }
     catch {
       case e: Exception =>
         log.error("subscribe", e)
     }
-  }
+
 
   private def createSubscription: Subscription = {
-    val subscription: Subscription = new Subscription
+    val subscription = new Subscription
     subscription.addAliveListener(subscriptionAliveListener)
     subscription.addNotificationListener(subscriptionListener)
     if (!client.hasSubscription(subscription.getSubscriptionId)) client.addSubscription(subscription)
@@ -151,87 +159,53 @@ class OpcDemoClient {
   private def createMonitoredItem(sub: Subscription, nodeId: NodeId, attributeId: UnsignedInteger) {
     var monitoredItemId: UnsignedInteger = null
     if (!sub.hasItem(nodeId, attributeId)) {
-      val dataItem: MonitoredDataItem = createMonitoredDataItem(nodeId, attributeId)
+      val dataItem = createMonitoredDataItem(nodeId, attributeId)
       dataItem.setDataChangeFilter(null)
       sub.addItem(dataItem)
       monitoredItemId = dataItem.getMonitoredItemId
     }
-    println("Subscription: Id=" + sub.getSubscriptionId + " ItemId=" + monitoredItemId)
   }
 
   private def createMonitoredDataItem(nodeId: NodeId, attributeId: UnsignedInteger): MonitoredDataItem = {
-    val dataItem: MonitoredDataItem = new MonitoredDataItem(nodeId, attributeId, MonitoringMode.Reporting)
+    val dataItem = new MonitoredDataItem(nodeId, attributeId, MonitoringMode.Reporting)
     dataItem.setDataChangeListener(new MonitoredDataItemListener {
       def onDataChange(sender: MonitoredDataItem, prevValue: DataValue, value: DataValue) {
-        val s: String = if (nodeId eq filterNodeId) "filter" else "disperser"
-        log.info(s"$s changed to ${value.getValue}")
+        if (nodeId == filterNodeId) {
+          listener.filterChanged(value.getValue.toString)
+        } else if (nodeId == disperserNodeId) {
+          listener.disperserChanged(value.getValue.toString)
+        }
       }
     })
     dataItem
   }
 
-  private def read(nodeId: NodeId): Int = {
-    val attributeId: UnsignedInteger = Attributes.Value
-    val value: DataValue = client.readAttribute(nodeId, attributeId)
-    value.getValue.intValue
+  private def read(nodeId: NodeId): String = {
+    val attributeId = Attributes.Value
+    val value = client.readAttribute(nodeId, attributeId)
+    value.getValue.toString
   }
 
-  private def write(nodeId: NodeId, value: Integer) {
-    val attributeId: UnsignedInteger = Attributes.Value
-    val node: UaNode = client.getAddressSpace.getNode(nodeId)
-    println("Writing to node " + nodeId + " - " + node.getDisplayName.getText)
-    var dataType: UaDataType = null
-    if (attributeId == Attributes.Value && node.isInstanceOf[UaVariable]) {
-      val v: UaVariable = node.asInstanceOf[UaVariable]
-      if (v.getDataType == null) v.setDataType(client.getAddressSpace.getType(v.getDataTypeId))
-      dataType = v.getDataType.asInstanceOf[UaDataType]
-      log.info("DataType: " + dataType.getDisplayName.getText)
-    }
-    try {
-      val status: Boolean = client.writeAttribute(nodeId, attributeId, value)
-      if (status) log.info("OK")
-      else log.info("OK (completes asynchronously)")
-    }
-    catch {
-      case e: Any =>
-        log.error("write", e)
-    }
-  }
+  def getFilter: String = read(filterNodeId)
 
-  def readFilter: Int = {
-    read(filterNodeId)
-  }
+  def getDisperser: String = read(disperserNodeId)
 
-  def writeFilter(value: Int) {
-    write(filterNodeId, value)
-  }
+  def setFilter(filter: String): Unit = callMethod(setFilterNodeId, filter)
 
-  def readDisperser: Int = {
-    read(disperserNodeId)
-  }
+  def setDisperser(disperser: String): Unit = callMethod(setDisperserNodeId, disperser)
 
-  def writeDisperser(value: Int) {
-    write(disperserNodeId, value)
-  }
+  def setFilterAsync(filter: String): AsyncResult = callMethodAsync(setFilterNodeId, filter)
 
+  def setDisperserAsync(disperser: String): AsyncResult = callMethodAsync(setDisperserNodeId, disperser)
 }
 
 object OpcDemoClient {
-  // Demo main
-  def main(args: Array[String]) {
-    import scala.concurrent.ExecutionContext.Implicits.global
+  val log = Logger.getLogger(classOf[OpcDemoClient])
 
-    PropertyConfigurator.configureAndWatch(classOf[OpcDemoClient].getResource("../log.properties").getFile, 5000)
-    val client = new OpcDemoClient
-    client.log.info("filter initial value: " + client.readFilter)
-    Future {
-      Thread.sleep(500)
-      client.writeFilter(99)
-    }
-    client.writeFilter(2)
-    assert(client.readFilter == 2)
-    client.log.info("disperser initial value: " + client.readDisperser)
-    client.writeDisperser(3)
-    assert(client.readDisperser == 3)
+  // Listen for changes in the filter or disperser variable values after calling one of the set* OPC methods
+  trait Listener {
+    def filterChanged(value: String): Unit
+
+    def disperserChanged(value: String): Unit
   }
 }

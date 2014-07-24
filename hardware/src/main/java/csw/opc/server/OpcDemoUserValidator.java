@@ -1,4 +1,4 @@
-package csw.opcDemo.server;
+package csw.opc.server;
 
 import org.apache.log4j.Logger;
 import org.opcfoundation.ua.core.UserIdentityToken;
