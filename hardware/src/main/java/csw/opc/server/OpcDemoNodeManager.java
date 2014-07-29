@@ -1,10 +1,11 @@
 package csw.opc.server;
 
 import java.util.Locale;
+import java.util.Random;
 
 import com.prosysopc.ua.ValueRanks;
 import com.prosysopc.ua.server.*;
-import com.prosysopc.ua.server.nodes.PlainMethod;
+import com.prosysopc.ua.server.nodes.*;
 import com.prosysopc.ua.types.opcua.server.*;
 import org.apache.log4j.Logger;
 import org.opcfoundation.ua.builtintypes.LocalizedText;
@@ -18,9 +19,6 @@ import com.prosysopc.ua.nodes.UaNodeFactoryException;
 import com.prosysopc.ua.nodes.UaObject;
 import com.prosysopc.ua.nodes.UaObjectType;
 import com.prosysopc.ua.nodes.UaType;
-import com.prosysopc.ua.server.nodes.PlainVariable;
-import com.prosysopc.ua.server.nodes.UaObjectNode;
-import com.prosysopc.ua.server.nodes.UaObjectTypeNode;
 
 // Defines a demo node manager that manages a filter and a disperser value.
 public class OpcDemoNodeManager extends NodeManagerUaNode {
@@ -32,6 +30,37 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
     public OpcDemoNodeManager(UaServer server, String namespaceUri)
             throws StatusException, UaInstantiationException {
         super(server, namespaceUri);
+    }
+
+
+    private void createMyEventType() throws StatusException {
+        int ns = this.getNamespaceIndex();
+
+        NodeId myEventTypeId = new NodeId(ns, OpcDemoEventType.DEMO_EVENT_ID);
+        UaObjectType myEventType = new UaObjectTypeNode(this, myEventTypeId,
+                "MyEventType", LocalizedText.NO_LOCALE);
+        getServer().getNodeManagerRoot().getType(Identifiers.BaseEventType)
+                .addSubType(myEventType);
+
+        NodeId myVariableId = new NodeId(ns, OpcDemoEventType.DEMO_VARIABLE_ID);
+        PlainVariable<Integer> myVariable = new PlainVariable<Integer>(this,
+                myVariableId, OpcDemoEventType.DEMO_VARIABLE_NAME,
+                LocalizedText.NO_LOCALE);
+        myVariable.setDataTypeId(Identifiers.Int32);
+        // The modeling rule must be defined for the mandatory elements to
+        // ensure that the event instances will also get the elements.
+        myVariable.addModellingRule(ModellingRule.Mandatory);
+        myEventType.addComponent(myVariable);
+
+        NodeId myPropertyId = new NodeId(ns, OpcDemoEventType.DEMO_PROPERTY_ID);
+        PlainProperty<Integer> myProperty = new PlainProperty<Integer>(this,
+                myPropertyId, OpcDemoEventType.DEMO_PROPERTY_NAME,
+                LocalizedText.NO_LOCALE);
+        myProperty.setDataTypeId(Identifiers.String);
+        myProperty.addModellingRule(ModellingRule.Mandatory);
+        myEventType.addProperty(myProperty);
+
+        getServer().registerClass(OpcDemoEventType.class, myEventTypeId);
     }
 
     // Creates a method set$name, with one argument $name and a boolean return value.
@@ -65,7 +94,7 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         this.addNodeAndReference(device, method, Identifiers.HasComponent);
 
         // Create the listener that handles the method calls
-        CallableListener methodManagerListener = new OpcDemoMethodManagerListener(name, opcVar, method);
+        CallableListener methodManagerListener = new OpcDemoMethodManagerListener(this, name, opcVar, method);
         MethodManagerUaNode m = (MethodManagerUaNode) this.getMethodManager();
         m.addCallListener(methodManagerListener);
     }
@@ -112,6 +141,9 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         device.addComponent(disperser);
         filter.setAccessLevel(AccessLevel.READONLY);
         disperser.setCurrentValue("Mirror");
+
+        createMyEventType();
+
 
         // OPC UA methods to set the filter and disperser
         createMethodNode(filter);

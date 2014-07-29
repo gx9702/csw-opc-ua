@@ -2,11 +2,11 @@ package csw.opc.client
 
 import com.prosysopc.ua._
 import com.prosysopc.ua.client._
-import org.apache.log4j.{PropertyConfigurator, Logger}
+import csw.opc.server.OpcDemoNodeManager
+import org.apache.log4j.Logger
 import org.opcfoundation.ua.builtintypes._
-import org.opcfoundation.ua.common.ServiceResultException
 import org.opcfoundation.ua.core._
-import org.opcfoundation.ua.transport.{ResultListener, AsyncResult}
+import org.opcfoundation.ua.transport.AsyncResult
 import org.opcfoundation.ua.transport.security.HttpsSecurityPolicy
 import org.opcfoundation.ua.transport.security.SecurityMode
 import java.io.File
@@ -71,8 +71,8 @@ case class OpcDemoClient(listener: OpcDemoClient.Listener) {
   connect()
 
   // XXX FIXME do this in a handler whenever connected
-//  val uri = OpcDemoNodeManager.NAMESPACE
-  val uri = "http://www.tmt.org/opcua/demoAddressSpace"
+  val uri = OpcDemoNodeManager.NAMESPACE
+//  val uri = "http://www.tmt.org/opcua/demoAddressSpace"
   val ns = client.getAddressSpace.getNamespaceTable.getIndex(uri)
   val deviceNodeId = new NodeId(ns, "OpcDemoDevice")
   val filterNodeId = new NodeId(ns, "Filter")
@@ -193,10 +193,6 @@ case class OpcDemoClient(listener: OpcDemoClient.Listener) {
   def setFilter(filter: String): Unit = callMethod(setFilterNodeId, filter)
 
   def setDisperser(disperser: String): Unit = callMethod(setDisperserNodeId, disperser)
-
-  def setFilterAsync(filter: String): AsyncResult = callMethodAsync(setFilterNodeId, filter)
-
-  def setDisperserAsync(disperser: String): AsyncResult = callMethodAsync(setDisperserNodeId, disperser)
 }
 
 object OpcDemoClient {

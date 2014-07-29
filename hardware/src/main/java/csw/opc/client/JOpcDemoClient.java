@@ -4,13 +4,12 @@ import com.prosysopc.ua.*;
 import com.prosysopc.ua.UaApplication.Protocol;
 import com.prosysopc.ua.client.*;
 import com.prosysopc.ua.nodes.*;
+import csw.opc.server.OpcDemoEventType;
+import csw.opc.server.OpcDemoNodeManager;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.opcfoundation.ua.builtintypes.*;
-import org.opcfoundation.ua.common.ServiceResultException;
 import org.opcfoundation.ua.core.*;
 import org.opcfoundation.ua.transport.AsyncResult;
-import org.opcfoundation.ua.transport.ResultListener;
 import org.opcfoundation.ua.transport.security.HttpsSecurityPolicy;
 import org.opcfoundation.ua.transport.security.SecurityMode;
 
@@ -27,7 +26,15 @@ public class JOpcDemoClient {
 
     private static String APP_NAME = "OpcDemoClient";
     private static Logger log = Logger.getLogger(JOpcDemoClient.class);
+//    String NAMESPACE = "http://www.tmt.org/opcua/demoAddressSpace"; // OpcDemoNodeManager.NAMESPACE
+    private static String NAMESPACE = OpcDemoNodeManager.NAMESPACE;
 
+    // Listen for changes in the filter or disperser variable values after calling one of the set* OPC methods
+    public interface Listener {
+        void filterChanged(String value);
+
+        void disperserChanged(String value);
+    }
     private static void printException(Exception e) {
         log.info(e.toString());
         if (e instanceof MethodCallStatusException) {
@@ -76,10 +83,6 @@ public class JOpcDemoClient {
 
         @Override
         public void onAlive(Subscription s) {
-            log.info(String.format(
-                    "%tc Subscription alive: ID=%d lastAlive=%tc",
-                    Calendar.getInstance(), s.getSubscriptionId().getValue(),
-                    s.getLastAlive()));
         }
 
         @Override
@@ -127,13 +130,47 @@ public class JOpcDemoClient {
         }
     };
 
+    private final QualifiedName[] eventFieldNames = {
+            new QualifiedName("EventType"), new QualifiedName("Message"),
+            new QualifiedName("SourceName"), new QualifiedName("Time"),
+            new QualifiedName("Severity"), new QualifiedName("ActiveState/Id"),
+            null, null};
+
+    private final MonitoredEventItemListener eventListener = new MonitoredEventItemListener() {
+        @Override
+        public void onEvent(MonitoredEventItem sender, Variant[] eventFields) {
+            log.info(eventToString(sender.getNodeId(), eventFieldNames, eventFields));
+        }
+    };
+
     private NodeId deviceNodeId = null;
     private NodeId filterNodeId = null;
     private NodeId disperserNodeId = null;
     private NodeId setFilterNodeId = null;
     private NodeId setDisperserNodeId = null;
+    private final Listener listener;
 
-    public JOpcDemoClient() {
+
+    public JOpcDemoClient(Listener listener)
+            throws SecureIdentityException, ServerListException, IOException, SessionActivationException, URISyntaxException {
+        this.listener = listener;
+        client = initialize();
+
+        connect();
+
+        // XXX FIXME do this in a handler whenever connected
+        int ns = client.getAddressSpace().getNamespaceTable().getIndex(NAMESPACE);
+        deviceNodeId = new NodeId(ns, "OpcDemoDevice");
+        filterNodeId = new NodeId(ns, "Filter");
+        disperserNodeId = new NodeId(ns, "Disperser");
+        setFilterNodeId = new NodeId(ns, "setFilter");
+        setDisperserNodeId = new NodeId(ns, "setDisperser");
+
+        subscribe(filterNodeId, Attributes.Value);
+        subscribe(disperserNodeId, Attributes.Value);
+
+        subscribe(filterNodeId, Attributes.EventNotifier);
+        subscribe(disperserNodeId, Attributes.EventNotifier);
     }
 
     /**
@@ -173,7 +210,7 @@ public class JOpcDemoClient {
     /**
      * Initializes the object, must be called after constructor
      */
-    private void initialize() throws URISyntaxException,
+    private UaClient initialize() throws URISyntaxException,
             SecureIdentityException, IOException, SessionActivationException,
             ServerListException {
 
@@ -181,11 +218,11 @@ public class JOpcDemoClient {
         log.info("Connecting to " + serverUri);
 
         // *** Create the UaClient
-        client = new UaClient(serverUri);
+        UaClient uaClient = new UaClient(serverUri);
 
         // Use PKI files to keep track of the trusted and rejected server certificates...
         final PkiFileBasedCertificateValidator validator = new PkiFileBasedCertificateValidator();
-        client.setCertificateValidator(validator);
+        uaClient.setCertificateValidator(validator);
 
         // *** Application Description is sent to the server
         ApplicationDescription appDescription = new ApplicationDescription();
@@ -209,7 +246,7 @@ public class JOpcDemoClient {
                 .loadOrCreateCertificate(appDescription, "Sample Organisation",
                 /* Private Key Password */"opcua",
                 /* Key File Path */privatePath,
-				/* CA certificate & private key */null,
+                /* CA certificate & private key */null,
 				/* Key Sizes for instance certificates to create */null,
 				/* Enable renewing the certificate */true);
 
@@ -220,49 +257,38 @@ public class JOpcDemoClient {
                 .loadOrCreateHttpsCertificate(appDescription, hostName,
                         "opcua", null, privatePath, true));
 
-        client.setApplicationIdentity(identity);
+        uaClient.setApplicationIdentity(identity);
 
         // Define our user locale - the default is Locale.getDefault()
-        client.setLocale(Locale.ENGLISH);
+        uaClient.setLocale(Locale.ENGLISH);
 
         // Define the call timeout in milliseconds. Default is 0 - to
         // use the value of UaClient.getEndpointConfiguration() which is
         // 120000 (2 min) by default
-        client.setTimeout(30000);
+        uaClient.setTimeout(30000);
 
         // StatusCheckTimeout is used to detect communication
         // problems and start automatic reconnection.
         // These are the default values:
-        client.setStatusCheckTimeout(10000);
+        uaClient.setStatusCheckTimeout(10000);
         // client.setAutoReconnect(true);
 
-        client.addServerStatusListener(serverStatusListener);
-        client.setSecurityMode(SecurityMode.NONE);
+        uaClient.addServerStatusListener(serverStatusListener);
+        uaClient.setSecurityMode(SecurityMode.NONE);
 
         // Define the security policies for HTTPS; ALL is the default
-        client.getHttpsSettings().setHttpsSecurityPolicies(
+        uaClient.getHttpsSettings().setHttpsSecurityPolicies(
                 HttpsSecurityPolicy.ALL);
 
         // Define a custom certificate validator for the HTTPS certificates
-        client.getHttpsSettings().setCertificateValidator(validator);
-        client.setUserIdentity(new UserIdentity());
+        uaClient.getHttpsSettings().setCertificateValidator(validator);
+        uaClient.setUserIdentity(new UserIdentity());
 
         // Set endpoint configuration parameters
-        client.getEndpointConfiguration().setMaxByteStringLength(Integer.MAX_VALUE);
-        client.getEndpointConfiguration().setMaxArrayLength(Integer.MAX_VALUE);
+        uaClient.getEndpointConfiguration().setMaxByteStringLength(Integer.MAX_VALUE);
+        uaClient.getEndpointConfiguration().setMaxArrayLength(Integer.MAX_VALUE);
 
-        connect();
-
-        String namespace = "http://www.tmt.org/opcua/demoAddressSpace"; // OpcDemoNodeManager.NAMESPACE
-        int ns = client.getAddressSpace().getNamespaceTable().getIndex(namespace);
-        deviceNodeId = new NodeId(ns, "OpcDemoDevice");
-        filterNodeId = new NodeId(ns, "Filter");
-        disperserNodeId = new NodeId(ns, "Disperser");
-        setFilterNodeId = new NodeId(ns, "setFilter");
-        setDisperserNodeId = new NodeId(ns, "setDisperser");
-
-        subscribe(filterNodeId);
-        subscribe(disperserNodeId);
+        return uaClient;
     }
 
 
@@ -280,13 +306,12 @@ public class JOpcDemoClient {
     }
 
 
-    private void subscribe(NodeId nodeId) {
-        log.info("*** Subscribing to node: " + nodeId);
+    private void subscribe(NodeId nodeId, UnsignedInteger attributeId) {
         try {
             // Create the subscription
             Subscription subscription = createSubscription();
             // Create the monitored item
-            createMonitoredItem(subscription, nodeId, Attributes.Value);
+            createMonitoredItem(subscription, nodeId, attributeId);
         } catch (ServiceException | StatusException e) {
             printException(e);
         }
@@ -313,13 +338,18 @@ public class JOpcDemoClient {
         UnsignedInteger monitoredItemId = null;
         // Create the monitored item, if it is not already in the subscription
         if (!sub.hasItem(nodeId, attributeId)) {
-            MonitoredDataItem dataItem = createMonitoredDataItem(nodeId, attributeId);
-            // Set the filter if you want to limit data changes
-            dataItem.setDataChangeFilter(null);
-            sub.addItem(dataItem);
-            monitoredItemId = dataItem.getMonitoredItemId();
+            if (Objects.equals(attributeId, Attributes.EventNotifier)) {
+                MonitoredEventItem eventItem = createMonitoredEventItem(nodeId);
+                sub.addItem(eventItem);
+                monitoredItemId = eventItem.getMonitoredItemId();
+            } else {
+                MonitoredDataItem dataItem = createMonitoredDataItem(nodeId, attributeId);
+                // Set the filter if you want to limit data changes
+                dataItem.setDataChangeFilter(null);
+                sub.addItem(dataItem);
+                monitoredItemId = dataItem.getMonitoredItemId();
+            }
         }
-        log.info("Subscription: Id=" + sub.getSubscriptionId() + " ItemId=" + monitoredItemId);
     }
 
     private MonitoredDataItem createMonitoredDataItem(final NodeId nodeId, UnsignedInteger attributeId) {
@@ -327,11 +357,94 @@ public class JOpcDemoClient {
         dataItem.setDataChangeListener(new MonitoredDataItemListener() {
             @Override
             public void onDataChange(MonitoredDataItem sender, DataValue prevValue, DataValue value) {
-                String s = (nodeId == filterNodeId) ? "filter" : "disperser";
-                log.info("onDataChange " + s + " changed to " + value.getValue());
+                if (nodeId == filterNodeId) {
+                    listener.filterChanged(value.getValue().toString());
+                } else if (nodeId == disperserNodeId) {
+                    listener.disperserChanged(value.getValue().toString());
+                }
             }
         });
         return dataItem;
+    }
+
+    private MonitoredEventItem createMonitoredEventItem(NodeId nodeId) throws StatusException {
+        initEventFieldNames();
+        EventFilter filter = createEventFilter(eventFieldNames);
+
+        // Create the item
+        MonitoredEventItem eventItem = new MonitoredEventItem(nodeId, filter);
+        eventItem.setEventListener(eventListener);
+        return eventItem;
+    }
+
+    private String eventFieldsToString(QualifiedName[] fieldNames, Variant[] fieldValues) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < fieldValues.length; i++) {
+            Object fieldValue = fieldValues[i] == null ? null : fieldValues[i].getValue();
+            // Find the BrowseName of the node corresponding to NodeId values
+            try {
+                UaNode node = null;
+                if (fieldValue instanceof NodeId)
+                    node = client.getAddressSpace().getNode((NodeId) fieldValue);
+                else if (fieldValue instanceof ExpandedNodeId)
+                    node = client.getAddressSpace().getNode((ExpandedNodeId) fieldValue);
+                if (node != null)
+                    fieldValue = String.format("%s {%s}", node.getBrowseName(), fieldValue);
+            } catch (Exception e) {
+                // Node not found, just use fieldValue
+            }
+            if (i < fieldNames.length) {
+                QualifiedName fieldName = fieldNames[i];
+                sb.append(fieldName.getName()).append("=").append(fieldValue).append("; ");
+            } else
+                sb.append("Node=").append(fieldValue).append("; ");
+        }
+        return sb.toString();
+    }
+
+
+    private String eventToString(NodeId nodeId, QualifiedName[] fieldNames, Variant[] fieldValues) {
+        return String.format("Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
+    }
+
+    private void initEventFieldNames() throws StatusException {
+        if (eventFieldNames[eventFieldNames.length - 1] == null) {
+            int ns = client.getNamespaceTable().getIndex(NAMESPACE);
+            eventFieldNames[eventFieldNames.length - 2] = new QualifiedName(ns, OpcDemoEventType.DEMO_VARIABLE_NAME);
+            eventFieldNames[eventFieldNames.length - 1] = new QualifiedName(ns, OpcDemoEventType.DEMO_PROPERTY_NAME);
+        }
+    }
+
+    private QualifiedName[] createBrowsePath(QualifiedName qualifiedName) {
+        if (!qualifiedName.getName().contains("/"))
+            return new QualifiedName[]{qualifiedName};
+        int namespaceIndex = qualifiedName.getNamespaceIndex();
+        String[] names = qualifiedName.getName().split("/");
+        QualifiedName[] result = new QualifiedName[names.length];
+        for (int i = 0; i < names.length; i++)
+            result[i] = new QualifiedName(namespaceIndex, names[i]);
+        return result;
+    }
+
+    protected EventFilter createEventFilter(QualifiedName[] eventFields) {
+        NodeId eventTypeId = Identifiers.BaseEventType;
+        UnsignedInteger eventAttributeId = Attributes.Value;
+        SimpleAttributeOperand[] selectClauses = new SimpleAttributeOperand[eventFields.length + 1];
+        for (int i = 0; i < eventFields.length; i++) {
+            QualifiedName[] browsePath = createBrowsePath(eventFields[i]);
+            selectClauses[i] = new SimpleAttributeOperand(eventTypeId, browsePath, eventAttributeId, null);
+        }
+        // Add a field to get the NodeId of the event source
+        selectClauses[eventFields.length] = new SimpleAttributeOperand(eventTypeId, null, Attributes.NodeId, null);
+        EventFilter filter = new EventFilter();
+        // Event field selection
+        filter.setSelectClauses(selectClauses);
+
+        ContentFilterBuilder fb = new ContentFilterBuilder(client.getEncoderContext());
+
+        // Apply the filter to Where-clause
+        filter.setWhereClause(fb.getContentFilter());
+        return filter;
     }
 
     private String read(NodeId nodeId) throws ServiceException, StatusException {
@@ -355,41 +468,5 @@ public class JOpcDemoClient {
 
     public void setDisperser(String disperser) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
         callMethod(setDisperserNodeId, disperser);
-    }
-
-    public AsyncResult setFilterAsync(String filter) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
-        return callMethodAsync(setFilterNodeId, filter);
-    }
-
-    public AsyncResult setDisperserAsync(String disperser) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
-        return callMethodAsync(setDisperserNodeId, disperser);
-    }
-
-    // Demo main
-    public static void demoMain(String[] args) throws Exception {
-        // Load Log4j configurations from external file
-        PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("/log.properties").getFile(), 5000);
-        final JOpcDemoClient client = new JOpcDemoClient();
-        client.initialize();
-
-        client.setFilter("NewFilter");
-        client.setDisperser("NewDisperser");
-
-        AsyncResult result = client.setFilterAsync("NewFilter2");
-        result.setListener(new ResultListener() {
-            @Override
-            public void onCompleted(Object o) {
-                try {
-                    log.info("filter changed (async) to: " + client.getFilter());
-                } catch (ServiceException | StatusException e) {
-                    e.printStackTrace();
-                }
-            }
-
-            @Override
-            public void onError(ServiceResultException e) {
-                log.error("Error setting filter (async)", e);
-            }
-        });
     }
 }

@@ -1,11 +1,9 @@
 package csw.opc.container2
 
 import akka.actor._
-import csw.opc.client.OpcDemoClient
+import csw.opc.client.{JOpcDemoClient, OpcDemoClient}
 import csw.services.cmd.akka.{CommandStatus, ConfigActor, RunId}
 import csw.services.cmd.akka.CommandQueueActor.SubmitWithRunId
-import org.opcfoundation.ua.common.ServiceResultException
-import org.opcfoundation.ua.transport.ResultListener
 import scala.util.Success
 import csw.services.cmd.akka.ConfigActor._
 import csw.util.cfg.Configurations._
@@ -25,18 +23,30 @@ object TestConfigActor {
 class TestConfigActor(override val commandStatusActor: ActorRef, configKey: String) extends ConfigActor {
   assert(configKey == "filter" || configKey == "disperser")
 
-  // Note: The listener here listens for changes in the OPC variables for filter and disperser
-  log.info("XXX create OPC client: start")
-  val opcClient = new OpcDemoClient(new OpcDemoClient.Listener {
+  // The last submit (the one currently being worked on)
+  var lastSubmit: Option[SubmitWithRunId] = None
+
+  // The listener argument listens for changes in the OPC variables for filter and disperser
+  val opcClient = new JOpcDemoClient(new JOpcDemoClient.Listener {
     override def filterChanged(value: String): Unit = {
-      log.info(s"filter set to $value")
+      if (configKey == "filter") returnStatus(value)
     }
 
     override def disperserChanged(value: String): Unit = {
-      log.info(s"disperser set to $value")
+      if (configKey == "disperser") returnStatus(value)
     }
   })
-  log.info("XXX create OPC client: done")
+
+  // Returns the command status to the submitter after the command has completed
+  def returnStatus(value: String): Unit = {
+    log.info(s"$configKey set to $value")
+    lastSubmit match {
+      case Some(submit) =>
+        returnStatus(CommandStatus.Completed(submit.runId), submit.submitter)
+        lastSubmit = None
+      case _ =>
+    }
+  }
 
   // Receive
   override def receive: Receive = receiveConfigs
@@ -45,23 +55,21 @@ class TestConfigActor(override val commandStatusActor: ActorRef, configKey: Stri
    * Called when a configuration is submitted
    */
   override def submit(submit: SubmitWithRunId): Unit = {
-    log.info("XXX submit to OPC")
+    log.info("submit to OPC")
+    if (lastSubmit.isDefined) {
+      // XXX The server will interrupt the currently running submit thread, but there might be race conditions
+      // that would need to be taken care of in the real implementation
+      returnStatus(CommandStatus.Canceled(submit.runId), submit.submitter)
+    }
+    lastSubmit = Some(submit)
     val config = submit.config.head.asInstanceOf[SetupConfig]
     val value = config("value").elems.head.toString
-    val result = configKey match {
-      case "filter" => opcClient.setFilterAsync(value)
-      case "disperser" => opcClient.setDisperserAsync(value)
+    // The listener passed to the OpcClient constructor will be notified when the filter or disperser
+    // setting has completed
+    configKey match {
+      case "filter" => opcClient.setFilter(value)
+      case "disperser" => opcClient.setDisperser(value)
     }
-    // The listener here is called when the method completes.
-    result.setListener(new ResultListener() {
-      override def onCompleted(o: Any): Unit = {
-        returnStatus(CommandStatus.Completed(submit.runId), submit.submitter)
-      }
-
-      override def onError(e: ServiceResultException): Unit = {
-        returnStatus(CommandStatus.Error(submit.runId, e.getMessage), submit.submitter)
-      }
-    })
   }
 
   /**
@@ -98,7 +106,6 @@ class TestConfigActor(override val commandStatusActor: ActorRef, configKey: Stri
    *
    */
   override def query(configs: SetupConfigList, replyTo: ActorRef): Unit = {
-    log.info("XXX query OPC")
     val confs = for (config <- configs) yield configKey match {
       case "filter" => config.withValues("value" -> opcClient.getFilter)
       case "disperser" => config.withValues("value" -> opcClient.getDisperser)
