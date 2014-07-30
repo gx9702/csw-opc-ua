@@ -1,7 +1,6 @@
 package csw.opc.server;
 
 import java.util.Locale;
-import java.util.Random;
 
 import com.prosysopc.ua.ValueRanks;
 import com.prosysopc.ua.server.*;
@@ -99,6 +98,51 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         m.addCallListener(methodManagerListener);
     }
 
+
+    // Creates a 'perfTest' OPC method that continually sets the pertTestVar OPC variable to different values in a
+    // background thread.
+    // The perfTest method takes two int arguments: The number of times to increment the variable and the
+    // delay in ms between settings.
+    private void createPerfTestMethodNode(PlainVariable<Integer> perfTestVar) throws StatusException {
+        String methodName = "perfTest";
+        int ns = this.getNamespaceIndex();
+        final NodeId methodId = new NodeId(ns, methodName);
+        PlainMethod method = new PlainMethod(this, methodId, methodName, Locale.ENGLISH);
+
+        Argument[] inputs = new Argument[2];
+        inputs[0] = new Argument();
+        inputs[0].setName("count");
+        inputs[0].setDataType(Identifiers.Integer);
+        inputs[0].setValueRank(ValueRanks.Scalar);
+        inputs[0].setArrayDimensions(null);
+        inputs[0].setDescription(new LocalizedText("Loop count", Locale.ENGLISH));
+
+        inputs[1] = new Argument();
+        inputs[1].setName("delay");
+        inputs[1].setDataType(Identifiers.Integer);
+        inputs[1].setValueRank(ValueRanks.Scalar);
+        inputs[1].setArrayDimensions(null);
+        inputs[1].setDescription(new LocalizedText("Delay in ms", Locale.ENGLISH));
+        method.setInputArguments(inputs);
+
+        Argument[] outputs = new Argument[1];
+        outputs[0] = new Argument();
+        outputs[0].setName("result");
+        outputs[0].setDataType(Identifiers.Boolean);
+        outputs[0].setValueRank(ValueRanks.Scalar);
+        outputs[0].setArrayDimensions(null);
+        outputs[0].setDescription(new LocalizedText("Return status", Locale.ENGLISH));
+        method.setOutputArguments(outputs);
+
+        this.addNodeAndReference(device, method, Identifiers.HasComponent);
+
+        // Create the listener that handles the method calls
+        CallableListener methodManagerListener = new OpcDemoPerfTestMethodManagerListener(this, perfTestVar, method);
+        MethodManagerUaNode m = (MethodManagerUaNode) this.getMethodManager();
+        m.addCallListener(methodManagerListener);
+    }
+
+
     private void createAddressSpace() throws StatusException,
             UaInstantiationException {
 
@@ -139,15 +183,25 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         disperser.setDataTypeId(Identifiers.String);
         disperser.setTypeDefinitionId(Identifiers.BaseDataVariableType);
         device.addComponent(disperser);
-        filter.setAccessLevel(AccessLevel.READONLY);
+        disperser.setAccessLevel(AccessLevel.READONLY);
         disperser.setCurrentValue("Mirror");
 
         createMyEventType();
 
-
         // OPC UA methods to set the filter and disperser
         createMethodNode(filter);
         createMethodNode(disperser);
+
+        // Add a var and method for use in performance tests
+        PlainVariable<Integer> perfTestVar = new PlainVariable<>(this, new NodeId(ns, "perfTestVar"), "perfTestVar",
+                LocalizedText.NO_LOCALE);
+        perfTestVar.setDataTypeId(Identifiers.Integer);
+        perfTestVar.setTypeDefinitionId(Identifiers.BaseDataVariableType);
+        device.addComponent(perfTestVar);
+        perfTestVar.setAccessLevel(AccessLevel.READONLY);
+        perfTestVar.setCurrentValue(-1);
+
+        createPerfTestMethodNode(perfTestVar);
     }
 
     @Override

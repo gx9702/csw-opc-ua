@@ -34,6 +34,8 @@ public class JOpcDemoClient {
         void filterChanged(String value);
 
         void disperserChanged(String value);
+
+        void perfTestVarChanged(int value);
     }
     private static void printException(Exception e) {
         log.info(e.toString());
@@ -148,6 +150,10 @@ public class JOpcDemoClient {
     private NodeId disperserNodeId = null;
     private NodeId setFilterNodeId = null;
     private NodeId setDisperserNodeId = null;
+
+    private NodeId perfTestVarNodeId = null;
+    private NodeId perfTestNodeId = null;
+
     private final Listener listener;
 
 
@@ -166,8 +172,12 @@ public class JOpcDemoClient {
         setFilterNodeId = new NodeId(ns, "setFilter");
         setDisperserNodeId = new NodeId(ns, "setDisperser");
 
+        perfTestVarNodeId = new NodeId(ns, "perfTestVar");
+        perfTestNodeId = new NodeId(ns, "perfTest");
+
         subscribe(filterNodeId, Attributes.Value);
         subscribe(disperserNodeId, Attributes.Value);
+        subscribe(perfTestVarNodeId, Attributes.Value);
 
         subscribe(filterNodeId, Attributes.EventNotifier);
         subscribe(disperserNodeId, Attributes.EventNotifier);
@@ -335,19 +345,21 @@ public class JOpcDemoClient {
 
     private void createMonitoredItem(Subscription sub, NodeId nodeId,
                                      UnsignedInteger attributeId) throws ServiceException, StatusException {
-        UnsignedInteger monitoredItemId = null;
         // Create the monitored item, if it is not already in the subscription
         if (!sub.hasItem(nodeId, attributeId)) {
             if (Objects.equals(attributeId, Attributes.EventNotifier)) {
                 MonitoredEventItem eventItem = createMonitoredEventItem(nodeId);
                 sub.addItem(eventItem);
-                monitoredItemId = eventItem.getMonitoredItemId();
             } else {
                 MonitoredDataItem dataItem = createMonitoredDataItem(nodeId, attributeId);
+
+                if (nodeId == perfTestVarNodeId) {
+                    dataItem.setSamplingInterval(0.0); // 0 means use fastest rate
+                    dataItem.setQueueSize(100);
+                }
                 // Set the filter if you want to limit data changes
                 dataItem.setDataChangeFilter(null);
                 sub.addItem(dataItem);
-                monitoredItemId = dataItem.getMonitoredItemId();
             }
         }
     }
@@ -361,6 +373,8 @@ public class JOpcDemoClient {
                     listener.filterChanged(value.getValue().toString());
                 } else if (nodeId == disperserNodeId) {
                     listener.disperserChanged(value.getValue().toString());
+                } else if (nodeId == perfTestVarNodeId) {
+                    listener.perfTestVarChanged(value.getValue().intValue());
                 }
             }
         });
@@ -404,7 +418,7 @@ public class JOpcDemoClient {
 
 
     private String eventToString(NodeId nodeId, QualifiedName[] fieldNames, Variant[] fieldValues) {
-        return String.format("Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
+        return String.format("XXX Event: Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
     }
 
     private void initEventFieldNames() throws StatusException {
@@ -448,11 +462,8 @@ public class JOpcDemoClient {
     }
 
     private String read(NodeId nodeId) throws ServiceException, StatusException {
-        UnsignedInteger attributeId = Attributes.Value;
-        DataValue value = client.readAttribute(nodeId, attributeId);
-        return value.getValue().toString();
+        return client.readAttribute(nodeId, Attributes.Value).getValue().toString();
     }
-
 
     public String getFilter() throws ServiceException, StatusException {
         return read(filterNodeId);
@@ -468,5 +479,28 @@ public class JOpcDemoClient {
 
     public void setDisperser(String disperser) throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
         callMethod(setDisperserNodeId, disperser);
+    }
+
+    /**
+     * Starts a performance test, setting the perTestVar OPC variable count times, with the given
+     * delay in ms between settings.
+     * @param count number of times to set the perfTestVar OPC variable
+     * @param delay sleep time in ms between settings
+     * @throws ServiceException
+     * @throws MethodArgumentException
+     * @throws StatusException
+     * @throws AddressSpaceException
+     */
+    public void startPerfTest(int count, int delay)
+            throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
+        Variant[] inputs = new Variant[]{new Variant(count), new Variant(delay)};
+        client.call(deviceNodeId, perfTestNodeId, inputs);
+    }
+
+    /**
+     * Returns the current value of the perfTestVar OPC variable
+     */
+    public int getPerfTestVar() throws ServiceException, StatusException {
+        return client.readAttribute(perfTestVarNodeId, Attributes.Value).getValue().intValue();
     }
 }

@@ -14,27 +14,19 @@ import org.opcfoundation.ua.builtintypes.StatusCode;
 import org.opcfoundation.ua.builtintypes.Variant;
 import org.opcfoundation.ua.core.StatusCodes;
 
-import java.util.Arrays;
-import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
-public class OpcDemoMethodManagerListener implements CallableListener {
+public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
+    private static Logger log = Logger.getLogger(OpcDemoPerfTestMethodManagerListener.class);
 
-    private static Logger log = Logger.getLogger(OpcDemoMethodManagerListener.class);
     OpcDemoNodeManager opcDemoNodeManager;
     final private UaNode method;
-    final private String name;
-    final private PlainVariable<String> opcVar;
+    final private PlainVariable<Integer> opcVar;
 
-    // Current timer for simulating the device busy working
-    private Timer currentWorkTimer = null;
-
-    public OpcDemoMethodManagerListener(OpcDemoNodeManager opcDemoNodeManager, String name,
-                                        PlainVariable<String> opcVar, UaNode method) {
-        super();
+    public OpcDemoPerfTestMethodManagerListener(OpcDemoNodeManager opcDemoNodeManager,
+                                                PlainVariable<Integer> opcVar, UaNode method) {
         this.opcDemoNodeManager = opcDemoNodeManager;
-        this.name = name;
         this.opcVar = opcVar;
         this.method = method;
     }
@@ -47,20 +39,17 @@ public class OpcDemoMethodManagerListener implements CallableListener {
                           final DiagnosticInfo[] inputArgumentDiagnosticInfos,
                           final Variant[] outputs) throws StatusException {
         if (methodId.equals(this.method.getNodeId())) {
-            String methodName = "set" + name;
-            log.info("Calling " + methodName + ": " + Arrays.toString(inputArguments));
-            MethodManager.checkInputArguments(new Class[]{String.class}, inputArguments, inputArgumentResults,
-                    inputArgumentDiagnosticInfos, false);
-            String value;
+            MethodManager.checkInputArguments(new Class[]{Integer.class, Integer.class}, inputArguments,
+                    inputArgumentResults, inputArgumentDiagnosticInfos, false);
+            int count, delay;
             try {
-                value = inputArguments[0].toString();
+                count = inputArguments[0].intValue();
+                delay = inputArguments[1].intValue();
             } catch (ClassCastException e) {
                 throw inputError(1, e.getMessage(), inputArgumentResults, inputArgumentDiagnosticInfos);
             }
 
-            // If the work is already in progress, cancel it and start the new work
-            // TODO: (should check if value is different)
-            simulateBackgroundWork(value);
+            simulateBackgroundWork(count, delay);
 
             outputs[0] = new Variant(true);
             return true; // Handled here
@@ -89,34 +78,18 @@ public class OpcDemoMethodManagerListener implements CallableListener {
         return new StatusException(StatusCodes.Bad_InvalidArgument);
     }
 
-    /**
-     * Send an event
-     * @param value some value
-     */
-    public void sendEvent(int value) {
-        // If the type has TypeDefinitionId, you can use the class
-        OpcDemoEventType ev = opcDemoNodeManager.createEvent(OpcDemoEventType.class);
-        ev.setMessage(name + "changing");
-        ev.setVariableValue(value);
-        ev.setPropertyValue("Property Value " + ev.getVariableValue());
-        ev.triggerEvent(null);
-    }
-
-    // Simulate a hardware device taking time to complete the action for the method
-    private void simulateBackgroundWork(final String value) {
-        if (currentWorkTimer != null) currentWorkTimer.cancel();
-        currentWorkTimer = new Timer();
-        int delay = randInt(1, 5) * 1000;
-        currentWorkTimer.schedule(new TimerTask() {
+    // Starts a background thread that continuously sets the OPC variable
+    private void simulateBackgroundWork(final int count, final int delay) {
+        opcVar.setMinimumSamplingInterval((double)delay);
+        final Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
             @Override
             public void run() {
-                opcVar.setCurrentValue(value);
-                currentWorkTimer = null;
+                int i = opcVar.getCurrentValue() + 1;
+                opcVar.setCurrentValue(i);
+                log.info("set perfTestVar to " + i);
+                if (i >= count) timer.cancel();
             }
-        }, delay);
-    }
-
-    private static int randInt(int min, int max) {
-        return new Random().nextInt((max - min) + 1) + min;
+        }, delay, delay);
     }
 }

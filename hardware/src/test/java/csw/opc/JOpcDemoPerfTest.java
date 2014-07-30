@@ -7,11 +7,10 @@ import org.scalatest.DoNotDiscover;
 
 // This test requires that OpcDemoServer server is running
 @DoNotDiscover
-public class JOpcDemoClientTests {
-    private static Logger log = Logger.getLogger(JOpcDemoClientTests.class);
+public class JOpcDemoPerfTest {
+    private static Logger log = Logger.getLogger(JOpcDemoPerfTest.class);
 
     public static void main(String[] args) throws Exception {
-        // Load Log4j configurations from external file
         PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("/log.properties").getFile(), 5000);
 
         final JOpcDemoClient client = new JOpcDemoClient(new JOpcDemoClient.Listener() {
@@ -32,8 +31,6 @@ public class JOpcDemoClientTests {
             }
         });
 
-        client.setFilter("NewFilter");
-        client.setDisperser("NewDisperser");
-        client.setFilter("NewFilter2");
+        client.startPerfTest(1000, 1);
     }
 }

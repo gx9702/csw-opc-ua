@@ -35,6 +35,10 @@ class TestConfigActor(override val commandStatusActor: ActorRef, configKey: Stri
     override def disperserChanged(value: String): Unit = {
       if (configKey == "disperser") returnStatus(value)
     }
+
+    override def perfTestVarChanged(value: Int): Unit = {
+      log.info(s"Perf test var set to $value")
+    }
   })
 
   // Returns the command status to the submitter after the command has completed
