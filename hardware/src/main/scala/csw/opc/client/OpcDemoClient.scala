@@ -13,6 +13,8 @@ import java.io.File
 import java.net.InetAddress
 import java.util._
 
+// Scala version of the OPC UA client:
+// XXX FIXME: Needs to be updated to include the perfTest and event features that are in the java version
 case class OpcDemoClient(listener: OpcDemoClient.Listener) {
   val APP_NAME = "OpcDemoClient"
   val log = Logger.getLogger(classOf[OpcDemoClient])
