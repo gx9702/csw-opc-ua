@@ -132,6 +132,11 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
                     case 1:
                         // change scalar variable
                         opcVar.setCurrentValue(i++);
+//                        try {
+//                            opcVar.setValue(new DataValue(new Variant(i++), StatusCode.GOOD, DateTime.currentTime(), DateTime.currentTime()));
+//                        } catch (StatusException e) {
+//                            e.printStackTrace();
+//                        }
                         break;
                     default:
                         i++;
