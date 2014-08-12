@@ -18,6 +18,11 @@ the testclient/lib directory:
 
 The other dependencies are all available from repositories and are automatically downloaded.
 
+Dependency on other CSW Projects
+--------------------------------
+
+This project depends on the pkg project in csw/csw, so you should run `sbt publishLocal` and `sbt stage` there.
+
 
 Sbt Build
 ---------
