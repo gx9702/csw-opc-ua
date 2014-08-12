@@ -6,6 +6,7 @@ import com.prosysopc.ua.client.*;
 import com.prosysopc.ua.nodes.*;
 import csw.opc.server.OpcDemoEventType;
 import csw.opc.server.OpcDemoNodeManager;
+import csw.opc.server.OpcDemoServer;
 import org.apache.log4j.Logger;
 import org.opcfoundation.ua.builtintypes.*;
 import org.opcfoundation.ua.core.*;
@@ -36,6 +37,10 @@ public class JOpcDemoClient {
         void disperserChanged(String value);
 
         void perfTestVarChanged(int value);
+
+        void analogArrayVarChanged(Integer[] value);
+
+        void staticArrayVarChanged(Integer[] value);
     }
     private static void printException(Exception e) {
         log.info(e.toString());
@@ -47,8 +52,7 @@ public class JOpcDemoClient {
                     StatusCode s = results[i];
                     if (s.isBad()) {
                         log.info("Status for Input #" + i + ": " + s);
-                        DiagnosticInfo d = me
-                                .getInputArgumentDiagnosticInfos()[i];
+                        DiagnosticInfo d = me.getInputArgumentDiagnosticInfos()[i];
                         if (d != null)
                             log.info("  DiagnosticInfo:" + i + ": " + d);
                     }
@@ -63,13 +67,12 @@ public class JOpcDemoClient {
     private ServerStatusListener serverStatusListener = new ServerStatusListener() {
         @Override
         public void onShutdown(UaClient uaClient, long secondsTillShutdown, LocalizedText shutdownReason) {
-            System.out.printf("Server shutdown in %d seconds. Reason: %s\n",
-                    secondsTillShutdown, shutdownReason.getText());
+            log.info("Server shutdown in " + secondsTillShutdown + " seconds. Reason: " + shutdownReason.getText());
         }
 
         @Override
         public void onStateChange(UaClient uaClient, ServerState oldState, ServerState newState) {
-            System.out.printf("ServerState changed from %s to %s\n", oldState, newState);
+            log.info("ServerState changed from " + oldState + " to " + newState);
             if (newState.equals(ServerState.Unknown))
                 log.info("ServerStatusError: " + uaClient.getServerStatusError());
         }
@@ -105,16 +108,19 @@ public class JOpcDemoClient {
 
         @Override
         public void onDataChange(Subscription subscription, MonitoredDataItem item, DataValue newValue) {
+            log.info("XXX SubscriptionNotificationListener.onDataChange");
         }
 
         @Override
         public void onError(Subscription subscription, Object notification,
                             Exception e) {
+            log.info("XXX SubscriptionNotificationListener.onError");
             e.printStackTrace();
         }
 
         @Override
         public void onEvent(Subscription subscription, MonitoredEventItem item, Variant[] eventFields) {
+            log.info("XXX SubscriptionNotificationListener.onEvent");
         }
 
         @Override
@@ -125,10 +131,12 @@ public class JOpcDemoClient {
 
         @Override
         public void onNotificationData(Subscription subscription, NotificationData notification) {
+            log.info("XXX SubscriptionNotificationListener.onNotificationData");
         }
 
         @Override
         public void onStatusChange(Subscription subscription, StatusCode oldStatus, StatusCode newStatus, DiagnosticInfo diagnosticInfo) {
+            log.info("XXX SubscriptionNotificationListener.onStatusChange");
         }
     };
 
@@ -153,6 +161,8 @@ public class JOpcDemoClient {
 
     private NodeId perfTestVarNodeId = null;
     private NodeId perfTestNodeId = null;
+    private NodeId analogArrayVarNodeId = null;
+    private NodeId staticArrayVarNodeId = null;
 
     private final Listener listener;
 
@@ -174,13 +184,17 @@ public class JOpcDemoClient {
 
         perfTestVarNodeId = new NodeId(ns, "perfTestVar");
         perfTestNodeId = new NodeId(ns, "perfTest");
+        analogArrayVarNodeId = new NodeId(ns, "Int32ArrayAnalogItem");
+        staticArrayVarNodeId = new NodeId(ns, "StaticInt32Array");
 
         subscribe(filterNodeId, Attributes.Value);
         subscribe(disperserNodeId, Attributes.Value);
         subscribe(perfTestVarNodeId, Attributes.Value);
+        subscribe(analogArrayVarNodeId, Attributes.Value);
+        subscribe(staticArrayVarNodeId, Attributes.Value);
 
-        subscribe(filterNodeId, Attributes.EventNotifier);
-        subscribe(disperserNodeId, Attributes.EventNotifier);
+        //Subscribe to events
+        subscribe(Identifiers.Server, Attributes.EventNotifier);
     }
 
     /**
@@ -224,7 +238,7 @@ public class JOpcDemoClient {
             SecureIdentityException, IOException, SessionActivationException,
             ServerListException {
 
-        String serverUri = "opc.tcp://localhost:52520/OPCUA/OpcDemoServer";
+        String serverUri = "opc.tcp://localhost:52520/OPCUA/" + OpcDemoServer.APP_NAME;
         log.info("Connecting to " + serverUri);
 
         // *** Create the UaClient
@@ -239,10 +253,8 @@ public class JOpcDemoClient {
         appDescription.setApplicationName(new LocalizedText(APP_NAME, Locale.ENGLISH));
         // 'localhost' (all lower case) in the URI is converted to the actual
         // host name of the computer in which the application is run
-        appDescription
-                .setApplicationUri("urn:localhost:UA:OpcDemoClient");
-        appDescription
-                .setProductUri("urn:prosysopc.com:UA:OpcDemoClient");
+        appDescription.setApplicationUri("urn:localhost:UA:OpcDemoClient");
+        appDescription.setProductUri("urn:prosysopc.com:UA:OpcDemoClient");
         appDescription.setApplicationType(ApplicationType.Client);
 
         // *** Certificates
@@ -287,8 +299,7 @@ public class JOpcDemoClient {
         uaClient.setSecurityMode(SecurityMode.NONE);
 
         // Define the security policies for HTTPS; ALL is the default
-        uaClient.getHttpsSettings().setHttpsSecurityPolicies(
-                HttpsSecurityPolicy.ALL);
+        uaClient.getHttpsSettings().setHttpsSecurityPolicies(HttpsSecurityPolicy.ALL);
 
         // Define a custom certificate validator for the HTTPS certificates
         uaClient.getHttpsSettings().setCertificateValidator(validator);
@@ -356,6 +367,12 @@ public class JOpcDemoClient {
                 if (nodeId == perfTestVarNodeId) {
                     dataItem.setSamplingInterval(0.0); // 0 means use fastest rate
                     dataItem.setQueueSize(100);
+                } else if (nodeId == analogArrayVarNodeId) {
+                    dataItem.setSamplingInterval(0.0); // ms
+                    dataItem.setQueueSize(100);
+                } else if (nodeId == staticArrayVarNodeId) {
+                    dataItem.setSamplingInterval(0.0); // ms
+                    dataItem.setQueueSize(100);
                 }
                 // Set the filter if you want to limit data changes
                 dataItem.setDataChangeFilter(null);
@@ -375,6 +392,10 @@ public class JOpcDemoClient {
                     listener.disperserChanged(value.getValue().toString());
                 } else if (nodeId == perfTestVarNodeId) {
                     listener.perfTestVarChanged(value.getValue().intValue());
+                } else if (nodeId == analogArrayVarNodeId) {
+                    listener.analogArrayVarChanged((Integer[]) value.getValue().getValue());
+                } else if (nodeId == staticArrayVarNodeId) {
+                    listener.staticArrayVarChanged((Integer[]) value.getValue().getValue());
                 }
             }
         });
@@ -418,7 +439,7 @@ public class JOpcDemoClient {
 
 
     private String eventToString(NodeId nodeId, QualifiedName[] fieldNames, Variant[] fieldValues) {
-        return String.format("XXX Event: Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
+        return String.format("Received Event: Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
     }
 
     private void initEventFieldNames() throws StatusException {
@@ -456,6 +477,12 @@ public class JOpcDemoClient {
 
         ContentFilterBuilder fb = new ContentFilterBuilder(client.getEncoderContext());
 
+        fb.add(FilterOperator.Not,
+                new ElementOperand(UnsignedInteger.valueOf(1)));
+        final LiteralOperand filteredType = new LiteralOperand(new Variant(
+                Identifiers.GeneralModelChangeEventType));
+        fb.add(FilterOperator.OfType, filteredType);
+
         // Apply the filter to Where-clause
         filter.setWhereClause(fb.getContentFilter());
         return filter;
@@ -482,18 +509,15 @@ public class JOpcDemoClient {
     }
 
     /**
-     * Starts a performance test, setting the perTestVar OPC variable count times, with the given
+     * Starts a performance test, setting an OPC variable count times, with the given
      * delay in ms between settings.
-     * @param count number of times to set the perfTestVar OPC variable
+     * @param count number of times to set the OPC variable
      * @param delay sleep time in ms between settings
-     * @throws ServiceException
-     * @throws MethodArgumentException
-     * @throws StatusException
-     * @throws AddressSpaceException
+     * @param testNo The variable to set: 1: scalar value, 2: analog array, 3: static array
      */
-    public void startPerfTest(int count, int delay)
+    public void startPerfTest(int count, int delay, int testNo)
             throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
-        Variant[] inputs = new Variant[]{new Variant(count), new Variant(delay)};
+        Variant[] inputs = new Variant[]{new Variant(count), new Variant(delay), new Variant(testNo)};
         client.call(deviceNodeId, perfTestNodeId, inputs);
     }
 
@@ -502,5 +526,14 @@ public class JOpcDemoClient {
      */
     public int getPerfTestVar() throws ServiceException, StatusException {
         return client.readAttribute(perfTestVarNodeId, Attributes.Value).getValue().intValue();
+    }
+
+
+    public Integer[] getAnalogArrayVarValue() throws ServiceException, StatusException {
+        return (Integer[])client.readAttribute(analogArrayVarNodeId, Attributes.Value).getValue().getValue();
+    }
+
+    public Integer[] getStaticArrayVarValue() throws ServiceException, StatusException {
+        return (Integer[])client.readAttribute(staticArrayVarNodeId, Attributes.Value).getValue().getValue();
     }
 }

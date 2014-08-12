@@ -30,6 +30,16 @@ public class JOpcDemoClientTests {
             public void perfTestVarChanged(int value) {
                 log.info("perfTestVar changed to: " + value);
             }
+
+            @Override
+            public void analogArrayVarChanged(Integer[] value) {
+                log.info("analogArrayVar[0] changed to: " + value[0]);
+            }
+
+            @Override
+            public void staticArrayVarChanged(Integer[] value) {
+                log.info("staticArrayVar[0] changed to: " + value[0]);
+            }
         });
 
         client.setFilter("NewFilter");

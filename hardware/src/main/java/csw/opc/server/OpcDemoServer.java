@@ -38,7 +38,9 @@ import com.prosysopc.ua.types.opcua.server.BuildInfoTypeNode;
 public class OpcDemoServer {
 
     private static Logger logger = Logger.getLogger(OpcDemoServer.class);
-    protected static String APP_NAME = "OpcDemoServer";
+    
+//    public static final String APP_NAME = "OpcDemoServer";
+    public static final String APP_NAME = "SampleConsoleServer";
 
     public static void main(String[] args) throws Exception {
         // Initialize log4j logging

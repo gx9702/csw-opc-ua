@@ -104,6 +104,7 @@ public class OpcDemoMethodManagerListener implements CallableListener {
 
     // Simulate a hardware device taking time to complete the action for the method
     private void simulateBackgroundWork(final String value) {
+        sendEvent(1);
         if (currentWorkTimer != null) currentWorkTimer.cancel();
         currentWorkTimer = new Timer();
         int delay = randInt(1, 5) * 1000;
@@ -112,6 +113,7 @@ public class OpcDemoMethodManagerListener implements CallableListener {
             public void run() {
                 opcVar.setCurrentValue(value);
                 currentWorkTimer = null;
+                sendEvent(2);
             }
         }, delay);
     }

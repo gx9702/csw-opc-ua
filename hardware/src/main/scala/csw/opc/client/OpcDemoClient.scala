@@ -2,7 +2,7 @@ package csw.opc.client
 
 import com.prosysopc.ua._
 import com.prosysopc.ua.client._
-import csw.opc.server.OpcDemoNodeManager
+import csw.opc.server.{OpcDemoServer, OpcDemoNodeManager}
 import org.apache.log4j.Logger
 import org.opcfoundation.ua.builtintypes._
 import org.opcfoundation.ua.core._
@@ -89,7 +89,7 @@ case class OpcDemoClient(listener: OpcDemoClient.Listener) {
    * Initializes the object, must be called after constructor
    */
   private def initialize(): UaClient = {
-    val serverUri = "opc.tcp://localhost:52520/OPCUA/OpcDemoServer"
+    val serverUri = "opc.tcp://localhost:52520/OPCUA/" + OpcDemoServer.APP_NAME
     log.info("Connecting to " + serverUri)
     val uaClient = new UaClient(serverUri)
     val validator = new PkiFileBasedCertificateValidator
