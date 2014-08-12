@@ -41,7 +41,10 @@ public class JOpcDemoClient {
         void analogArrayVarChanged(Integer[] value);
 
         void staticArrayVarChanged(Integer[] value);
+
+        void onEvent(int value);
     }
+
     private static void printException(Exception e) {
         log.info(e.toString());
         if (e instanceof MethodCallStatusException) {
@@ -108,7 +111,7 @@ public class JOpcDemoClient {
 
         @Override
         public void onDataChange(Subscription subscription, MonitoredDataItem item, DataValue newValue) {
-            log.info("XXX SubscriptionNotificationListener.onDataChange");
+//            log.info("XXX SubscriptionNotificationListener.onDataChange");
         }
 
         @Override
@@ -120,7 +123,7 @@ public class JOpcDemoClient {
 
         @Override
         public void onEvent(Subscription subscription, MonitoredEventItem item, Variant[] eventFields) {
-            log.info("XXX SubscriptionNotificationListener.onEvent");
+            listener.onEvent(eventFields[eventFieldNames.length - 2].intValue());
         }
 
         @Override
@@ -144,14 +147,15 @@ public class JOpcDemoClient {
             new QualifiedName("EventType"), new QualifiedName("Message"),
             new QualifiedName("SourceName"), new QualifiedName("Time"),
             new QualifiedName("Severity"), new QualifiedName("ActiveState/Id"),
-            null, null};
-
-    private final MonitoredEventItemListener eventListener = new MonitoredEventItemListener() {
-        @Override
-        public void onEvent(MonitoredEventItem sender, Variant[] eventFields) {
-            log.info(eventToString(sender.getNodeId(), eventFieldNames, eventFields));
-        }
+            null, null
     };
+
+//    private final MonitoredEventItemListener eventListener = new MonitoredEventItemListener() {
+//        @Override
+//        public void onEvent(MonitoredEventItem sender, Variant[] eventFields) {
+//            listener.onEvent(eventFields[eventFieldNames.length - 2].intValue());
+//        }
+//    };
 
     private NodeId deviceNodeId = null;
     private NodeId filterNodeId = null;
@@ -167,10 +171,10 @@ public class JOpcDemoClient {
     private final Listener listener;
 
 
-    public JOpcDemoClient(Listener listener)
+    public JOpcDemoClient(String host, Listener listener)
             throws SecureIdentityException, ServerListException, IOException, SessionActivationException, URISyntaxException {
         this.listener = listener;
-        client = initialize();
+        client = initialize(host);
 
         connect();
 
@@ -233,12 +237,13 @@ public class JOpcDemoClient {
 
     /**
      * Initializes the object, must be called after constructor
+     * @param host the host where the server is running
      */
-    private UaClient initialize() throws URISyntaxException,
+    private UaClient initialize(String host) throws URISyntaxException,
             SecureIdentityException, IOException, SessionActivationException,
             ServerListException {
 
-        String serverUri = "opc.tcp://localhost:52520/OPCUA/" + OpcDemoServer.APP_NAME;
+        String serverUri = "opc.tcp://" + host + ":52520/OPCUA/" + OpcDemoServer.APP_NAME;
         log.info("Connecting to " + serverUri);
 
         // *** Create the UaClient
@@ -408,39 +413,39 @@ public class JOpcDemoClient {
 
         // Create the item
         MonitoredEventItem eventItem = new MonitoredEventItem(nodeId, filter);
-        eventItem.setEventListener(eventListener);
+//        eventItem.setEventListener(eventListener);
         return eventItem;
     }
 
-    private String eventFieldsToString(QualifiedName[] fieldNames, Variant[] fieldValues) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < fieldValues.length; i++) {
-            Object fieldValue = fieldValues[i] == null ? null : fieldValues[i].getValue();
-            // Find the BrowseName of the node corresponding to NodeId values
-            try {
-                UaNode node = null;
-                if (fieldValue instanceof NodeId)
-                    node = client.getAddressSpace().getNode((NodeId) fieldValue);
-                else if (fieldValue instanceof ExpandedNodeId)
-                    node = client.getAddressSpace().getNode((ExpandedNodeId) fieldValue);
-                if (node != null)
-                    fieldValue = String.format("%s {%s}", node.getBrowseName(), fieldValue);
-            } catch (Exception e) {
-                // Node not found, just use fieldValue
-            }
-            if (i < fieldNames.length) {
-                QualifiedName fieldName = fieldNames[i];
-                sb.append(fieldName.getName()).append("=").append(fieldValue).append("; ");
-            } else
-                sb.append("Node=").append(fieldValue).append("; ");
-        }
-        return sb.toString();
-    }
+//    private String eventFieldsToString(QualifiedName[] fieldNames, Variant[] fieldValues) {
+//        StringBuilder sb = new StringBuilder();
+//        for (int i = 0; i < fieldValues.length; i++) {
+//            Object fieldValue = fieldValues[i] == null ? null : fieldValues[i].getValue();
+//            // Find the BrowseName of the node corresponding to NodeId values
+//            try {
+//                UaNode node = null;
+//                if (fieldValue instanceof NodeId)
+//                    node = client.getAddressSpace().getNode((NodeId) fieldValue);
+//                else if (fieldValue instanceof ExpandedNodeId)
+//                    node = client.getAddressSpace().getNode((ExpandedNodeId) fieldValue);
+//                if (node != null)
+//                    fieldValue = String.format("%s {%s}", node.getBrowseName(), fieldValue);
+//            } catch (Exception e) {
+//                // Node not found, just use fieldValue
+//            }
+//            if (i < fieldNames.length) {
+//                QualifiedName fieldName = fieldNames[i];
+//                sb.append(fieldName.getName()).append("=").append(fieldValue).append("; ");
+//            } else
+//                sb.append("Node=").append(fieldValue).append("; ");
+//        }
+//        return sb.toString();
+//    }
 
 
-    private String eventToString(NodeId nodeId, QualifiedName[] fieldNames, Variant[] fieldValues) {
-        return String.format("Received Event: Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
-    }
+//    private String eventToString(NodeId nodeId, QualifiedName[] fieldNames, Variant[] fieldValues) {
+//        return String.format("Received Event: Node: %s Fields: %s", nodeId, eventFieldsToString(fieldNames, fieldValues));
+//    }
 
     private void initEventFieldNames() throws StatusException {
         if (eventFieldNames[eventFieldNames.length - 1] == null) {
@@ -518,6 +523,7 @@ public class JOpcDemoClient {
     public void startPerfTest(int count, int delay, int testNo)
             throws ServiceException, MethodArgumentException, StatusException, AddressSpaceException {
         Variant[] inputs = new Variant[]{new Variant(count), new Variant(delay), new Variant(testNo)};
+
         client.call(deviceNodeId, perfTestNodeId, inputs);
     }
 

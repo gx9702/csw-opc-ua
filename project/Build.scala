@@ -23,6 +23,13 @@ object Build extends Build {
       test(scalaTest)
     )
 
+  lazy val testclient = project
+    .settings(packageSettings: _*)
+    .settings(mappings in Universal <+= (packageBin in Compile, sourceDirectory) map { (_, src) =>
+    val conf = src / "main" / "resources" / "log.properties"
+    conf -> "bin/log.properties"
+  }).dependsOn(hardware)
+
   lazy val container1 = project
     .settings(packageSettings: _*)
     .settings(bashScriptExtraDefines ++= Seq(s"addJava -Dcsw.extjs.root=" + file("../csw-extjs").absolutePath))

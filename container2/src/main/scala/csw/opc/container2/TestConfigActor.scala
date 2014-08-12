@@ -27,7 +27,7 @@ class TestConfigActor(override val commandStatusActor: ActorRef, configKey: Stri
   var lastSubmit: Option[SubmitWithRunId] = None
 
   // The listener argument listens for changes in the OPC variables for filter and disperser
-  val opcClient = new JOpcDemoClient(new JOpcDemoClient.Listener {
+  val opcClient = new JOpcDemoClient("localhost", new JOpcDemoClient.Listener {
     override def filterChanged(value: String): Unit = {
       if (configKey == "filter") returnStatus(value)
     }
@@ -39,6 +39,12 @@ class TestConfigActor(override val commandStatusActor: ActorRef, configKey: Stri
     override def perfTestVarChanged(value: Int): Unit = {
       log.info(s"Perf test var set to $value")
     }
+
+    override def analogArrayVarChanged(value: Array[Integer]): Unit = {}
+
+    override def onEvent(value: Int): Unit = {}
+
+    override def staticArrayVarChanged(value: Array[Integer]): Unit = {}
   })
 
   // Returns the command status to the submitter after the command has completed

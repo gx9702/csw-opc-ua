@@ -14,7 +14,7 @@ public class JOpcDemoClientTests {
         // Load Log4j configurations from external file
         PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("/log.properties").getFile(), 5000);
 
-        final JOpcDemoClient client = new JOpcDemoClient(new JOpcDemoClient.Listener() {
+        final JOpcDemoClient client = new JOpcDemoClient("localhost", new JOpcDemoClient.Listener() {
 
             @Override
             public void filterChanged(String value) {
@@ -39,6 +39,11 @@ public class JOpcDemoClientTests {
             @Override
             public void staticArrayVarChanged(Integer[] value) {
                 log.info("staticArrayVar[0] changed to: " + value[0]);
+            }
+
+            @Override
+            public void onEvent(int value) {
+                log.info("event " + value);
             }
         });
 

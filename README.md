@@ -9,7 +9,9 @@ See the document "OSW TN009 - TMT CSW PACKAGING SOFTWARE DESIGN DOCUMENT" for a 
 Prosys OPC UA Dependency
 ----------------------------
 
-Before compiling, you need to manually copy these two jar files to the hardware/lib directory:
+Before compiling, you need to manually copy (or make links to) these two jar files to 
+the hardware/lib directory and
+the testclient/lib directory:
 
 * Opc.Ua.Stack-1.02.335.6.jar
 * Prosys-OPC-UA-Java-SDK-Client-Server-Evaluation-2.0.0-194.jar
@@ -31,6 +33,9 @@ The stage task creates the distribution with the scripts for the applications
 Note: See <a href="https://github.com/tmtsoftware/csw-extjs">csw-extjs</a> for how to setup the ExtJS
 based web UI used below. You need to install and run some "sencha" commands once to prepare the web app, otherwise
 the generated CSS file will not be found and the web app will not display properly.
+
+Running
+-------
 
 To run the demo: Open terminal windows or tabs in these directories and run these commands:
 

@@ -62,6 +62,13 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
                 throw inputError(1, e.getMessage(), inputArgumentResults, inputArgumentDiagnosticInfos);
             }
 
+            opcVar.setMinimumSamplingInterval(delay / 2.0);
+            analogArrayNode.setMinimumSamplingInterval(delay / 2.0);
+            staticArrayNode.setMinimumSamplingInterval(delay / 2.0);
+//            opcVar.setMinimumSamplingInterval(1.0);
+//            analogArrayNode.setMinimumSamplingInterval(1.0);
+//            staticArrayNode.setMinimumSamplingInterval(1.0);
+
             simulateBackgroundWork(count, delay, testNo);
 
             outputs[0] = new Variant(true);
@@ -98,64 +105,74 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
         ev.setVariableValue(value);
         ev.setPropertyValue("Property Value " + ev.getVariableValue());
         ev.triggerEvent(null);
-        log.info("Sent event: " + value);
+//        log.info("Sent event: " + value);
     }
 
 
     // Starts a background thread that continuously sets the OPC variable (given by testNo)
     private void simulateBackgroundWork(final int count, final int delay, final int testNo) {
-        if (testNo == 0) {
-            // just send event
-            final Timer timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                private int eventValue = 0;
+        final Timer timer = new Timer();
+        timer.scheduleAtFixedRate(new TimerTask() {
+            private int i = 0;
+            private DateTime startTime = DateTime.currentTime();
 
-                @Override
-                public void run() {
-                    if (eventValue >= count) timer.cancel();
-                    sendEvent(eventValue++);
+            @Override
+            public void run() {
+                if (i >= count) {
+                    timer.cancel();
+                    DateTime stopTime = DateTime.currentTime();
+                    long t = stopTime.getTimeInMillis() - startTime.getTimeInMillis();
+                    logResults(t / 1000.0, count, delay, testNo);
                 }
-            }, delay, delay);
-        } else if (testNo == 1) {
-            // change scalar variable
-            opcVar.setMinimumSamplingInterval((double) delay);
-            final Timer timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                private int i = 0;
-                @Override
-                public void run() {
-                    if (i >= count) timer.cancel();
-                    opcVar.setCurrentValue(i);
-                    log.info("set perfTestVar to " + i);
-                }
-            }, delay, delay);
-        } else {
-            // change array variable
-            final Timer timer = new Timer();
-            timer.scheduleAtFixedRate(new TimerTask() {
-                private int i = 0;
-                @Override
-                public void run() {
-                    if (i >= count) timer.cancel();
-                    final DataValue dv = (testNo == 2) ? analogArrayNode.getValue() : staticArrayNode.getValue();
-                    Integer[] ar = (Integer[])dv.getValue().getValue();
-                    ar[0]++; // could update the whole array, but that is not the point of the test here
-                    dv.setValue(new Variant(ar));
-                    dv.setServerTimestamp(DateTime.currentTime());
-                    dv.setSourceTimestamp(DateTime.currentTime());
-                    try {
-                        if (testNo == 2) {
-                            // change analog array variable
-                            analogArrayNode.setValue(dv);
-                        } else {
-                            // change static array variable
-                            staticArrayNode.setValue(dv);
+                switch (testNo) {
+                    case 0:
+                        // just send event
+                        sendEvent(i++);
+                        break;
+                    case 1:
+                        // change scalar variable
+                        opcVar.setCurrentValue(i++);
+                        break;
+                    default:
+                        i++;
+                        // change array variable
+                        final DataValue dv = (testNo == 2) ? analogArrayNode.getValue() : staticArrayNode.getValue();
+                        Integer[] ar = (Integer[]) dv.getValue().getValue();
+                        Integer[] ar2 = Arrays.copyOf(ar, ar.length);
+                        ar2[0] = i;
+                        try {
+                            if (testNo == 2) {
+                                // change analog array variable
+                                analogArrayNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, DateTime.currentTime(), DateTime.currentTime()));
+                            } else {
+                                // change static array variable
+                                staticArrayNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, DateTime.currentTime(), DateTime.currentTime()));
+                            }
+                        } catch (StatusException e) {
+                            e.printStackTrace();
                         }
-                    } catch (StatusException e) {
-                        e.printStackTrace();
-                    }
+                        break;
                 }
-            }, delay, delay);
+            }
+        }, delay, delay);
+    }
+
+    // Log results of performance test
+    private void logResults(double secs, int count, int delay, int testNo) {
+        switch (testNo) {
+            case 0:
+                log.info("Done: Sent " + count + " events in " + secs + " seconds, delay in ms was: " + delay);
+                break;
+            case 1:
+                log.info("Done: Updated scalar variable " + count + " times in " + secs + " seconds, delay in ms was: " + delay);
+                break;
+            case 2:
+                log.info("Done: Updated analog array variable " + count + " times in " + secs + " seconds, delay in ms was: " + delay);
+                break;
+            case 3:
+                log.info("Done: Updated static array variable " + count + " times in " + secs + " seconds, delay in ms was: " + delay);
+                break;
         }
+
     }
 }

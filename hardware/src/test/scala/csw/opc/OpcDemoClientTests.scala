@@ -18,7 +18,6 @@ object OpcDemoClientTests extends App {
     def disperserChanged(value: String): Unit = {
       log.info(s"disperser changed to: $value")
     }
-
   })
 
   // setFilter and setDisperser call the OPC UA methods and return when done.
