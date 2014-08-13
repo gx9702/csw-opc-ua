@@ -126,7 +126,14 @@ public class JOpcDemoClient {
 //            DateTime t = (DateTime)eventFields[3].getValue();
 //            long ms = DateTime.currentTime().getMilliSeconds() - t.getMilliSeconds();
 //            log.info("Server event to client time in ms: " + ms);
-            listener.onEvent(eventFields[eventFieldNames.length - 2].intValue());
+
+            // Just to make sure the payload was transferred (payload should be all x's)
+            String propVal = eventFields[eventFieldNames.length - 1].toString();
+            assert(propVal.startsWith("xxx"));
+
+            // The event value is incremented each time for the performance test
+            int eventVal = eventFields[eventFieldNames.length - 2].intValue();
+            listener.onEvent(eventVal);
         }
 
         @Override
