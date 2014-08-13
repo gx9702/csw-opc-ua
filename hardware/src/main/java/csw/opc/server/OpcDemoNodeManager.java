@@ -1,10 +1,7 @@
 package csw.opc.server;
 
 import java.lang.reflect.Array;
-import java.util.Arrays;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import com.prosysopc.ua.ValueRanks;
 import com.prosysopc.ua.nodes.*;
@@ -25,11 +22,17 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
     public static final String NAMESPACE = "http://www.tmt.org/opcua/demoAddressSpace";
 
     private UaObjectNode device;
+
+    // The size of the event payload, for performance testing
+    private final int eventSize;
+
     private final OpcDemoEventManagerListener eventManagerListener = new OpcDemoEventManagerListener();
 
-    public OpcDemoNodeManager(UaServer server, String namespaceUri)
+    public OpcDemoNodeManager(UaServer server, String namespaceUri, int eventSize)
             throws StatusException, UaInstantiationException {
         super(server, namespaceUri);
+
+        this.eventSize = eventSize;
     }
 
 
@@ -43,7 +46,7 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
                 .addSubType(demoEventType);
 
         NodeId demoVariableId = new NodeId(ns, OpcDemoEventType.DEMO_VARIABLE_ID);
-        PlainVariable<Integer> demoVariable = new PlainVariable<Integer>(this,
+        PlainVariable<Integer> demoVariable = new PlainVariable<>(this,
                 demoVariableId, OpcDemoEventType.DEMO_VARIABLE_NAME,
                 LocalizedText.NO_LOCALE);
         demoVariable.setDataTypeId(Identifiers.Int32);
@@ -53,7 +56,7 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         demoEventType.addComponent(demoVariable);
 
         NodeId demoPropertyId = new NodeId(ns, OpcDemoEventType.DEMO_PROPERTY_ID);
-        PlainProperty<Integer> demoProperty = new PlainProperty<Integer>(this,
+        PlainProperty<String> demoProperty = new PlainProperty<>(this,
                 demoPropertyId, OpcDemoEventType.DEMO_PROPERTY_NAME,
                 LocalizedText.NO_LOCALE);
         demoProperty.setDataTypeId(Identifiers.String);
@@ -149,8 +152,8 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         this.addNodeAndReference(device, method, Identifiers.HasComponent);
 
         // Create the listener that handles the method calls
-        CallableListener methodManagerListener = new OpcDemoPerfTestMethodManagerListener(this, perfTestVar,
-                analogArrayNode, staticArrayNode, method);
+        CallableListener methodManagerListener = new OpcDemoPerfTestMethodManagerListener(
+                this, perfTestVar, analogArrayNode, staticArrayNode, method, eventSize);
         MethodManagerUaNode m = (MethodManagerUaNode) this.getMethodManager();
         m.addCallListener(methodManagerListener);
     }

@@ -224,10 +224,6 @@ public class OpcDemoEventManagerListener implements EventManagerListener {
         return eventId == null ? "(null)" : Arrays.toString(eventId);
     }
 
-    /**
-     * @return
-     * @throws RuntimeException
-     */
     byte[] getNextUserEventId() throws RuntimeException {
         return EventManager.createEventId(eventId++);
     }

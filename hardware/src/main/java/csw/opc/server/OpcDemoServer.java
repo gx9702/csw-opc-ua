@@ -3,7 +3,6 @@ package csw.opc.server;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.security.cert.CertificateException;
 import java.util.GregorianCalendar;
 import java.util.Locale;
 
@@ -52,8 +51,11 @@ public class OpcDemoServer {
         // Initialize the server
         opcDemoServer.initialize(52520, 52443, APP_NAME);
 
+        int eventSize = 256;
+        if (args.length > 0) eventSize = Integer.valueOf(args[0]);
+
         // Create the address space
-        opcDemoServer.createAddressSpace();
+        opcDemoServer.createAddressSpace(eventSize);
 
         opcDemoServer.run(false);
     }
@@ -65,11 +67,11 @@ public class OpcDemoServer {
 
     protected final CertificateValidationListener validationListener = new OpcDemoCertificateValidationListener();
 
-    protected void createAddressSpace() throws StatusException,
+    protected void createAddressSpace(int eventSize) throws StatusException,
             UaInstantiationException, NodeBuilderException {
 
         // My Node Manager
-        opcDemoNodeManager = new OpcDemoNodeManager(server, OpcDemoNodeManager.NAMESPACE);
+        opcDemoNodeManager = new OpcDemoNodeManager(server, OpcDemoNodeManager.NAMESPACE, eventSize);
 
         opcDemoNodeManager.addListener(myNodeManagerListener);
 

@@ -3,7 +3,7 @@ Performance Test OPC UA Client
 
 This project contains a test OPC UA client that does a performance test, 
 setting an OPC variable, array or firing an OPC event count times
-with the given delay in ms between settings.
+with the given delay in microseconds between settings.
 
 Dependencies
 ------------
@@ -22,12 +22,18 @@ Running
 
 To run the test client: Open terminal windows or tabs in these directories and run these commands:
 
-* cd hardware/target/universal/stage/bin; ./hardware -Dlog4j.configuration=log.properties
+* cd hardware/target/universal/stage/bin; ./hardware -Dlog4j.configuration=log.properties 1000
 * cd testclient/target/universal/stage/bin; ./testclient -Dlog4j.configuration=log.properties localhost 100000 100 0
 
 Note that currently, the test results may not be valid unless both the server and client are started new each time.
 If you restart the client without restarting the server, it will use the same id and might receive events from
 methods started in the previous session.
+
+hardware (server) command line arguments
+----------------------------------------
+
+The server has one optional argument:
+The size of the event payload (default: a String of length 256 (about 512 bytes))
 
 testclient Command line arguments
 ---------------------------------

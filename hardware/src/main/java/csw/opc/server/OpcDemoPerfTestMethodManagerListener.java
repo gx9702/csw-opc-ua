@@ -14,8 +14,6 @@ import org.opcfoundation.ua.builtintypes.*;
 import org.opcfoundation.ua.core.StatusCodes;
 
 import java.util.Arrays;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -30,20 +28,30 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
     private static Logger log = Logger.getLogger(OpcDemoPerfTestMethodManagerListener.class);
 
     OpcDemoNodeManager opcDemoNodeManager;
-    final private UaNode method;
-    final private PlainVariable<Integer> opcVar;
-    final private AnalogItemType analogArrayNode;
-    final private UaVariableNode staticArrayNode;
+    private final UaNode method;
+    private final PlainVariable<Integer> opcVar;
+    private final AnalogItemType analogArrayNode;
+    private final UaVariableNode staticArrayNode;
+
+    // The event payload, for performance testing
+    private final String eventPayload;
+
 
     public OpcDemoPerfTestMethodManagerListener(OpcDemoNodeManager opcDemoNodeManager,
                                                 PlainVariable<Integer> opcVar,
-                                                AnalogItemType analogArrayNode, UaVariableNode staticArrayNode,
-                                                UaNode method) {
+                                                AnalogItemType analogArrayNode,
+                                                UaVariableNode staticArrayNode,
+                                                UaNode method,
+                                                int eventSize) {
         this.opcDemoNodeManager = opcDemoNodeManager;
         this.opcVar = opcVar;
         this.analogArrayNode = analogArrayNode;
         this.staticArrayNode = staticArrayNode;
         this.method = method;
+
+        final char[] array = new char[eventSize];
+        Arrays.fill(array, 'x');
+        this.eventPayload = new String(array);
     }
 
     @Override
@@ -103,7 +111,7 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
         OpcDemoEventType ev = opcDemoNodeManager.createEvent(OpcDemoEventType.class);
         ev.setMessage("array changed");
         ev.setVariableValue(value);
-        ev.setPropertyValue("Property Value " + ev.getVariableValue());
+        ev.setPropertyValue(eventPayload);
         ev.triggerEvent(null);
 //        log.info("Sent event: " + value);
     }

@@ -86,22 +86,8 @@ public class OpcDemoMethodManagerListener implements CallableListener {
         return new StatusException(StatusCodes.Bad_InvalidArgument);
     }
 
-    /**
-     * Send an event
-     * @param value some value
-     */
-    public void sendEvent(int value) {
-        // If the type has TypeDefinitionId, you can use the class
-        OpcDemoEventType ev = opcDemoNodeManager.createEvent(OpcDemoEventType.class);
-        ev.setMessage(name + "changing");
-        ev.setVariableValue(value);
-        ev.setPropertyValue("Property Value " + ev.getVariableValue());
-        ev.triggerEvent(null);
-    }
-
     // Simulate a hardware device taking time to complete the action for the method
     private void simulateBackgroundWork(final String value) {
-        sendEvent(1);
         if (currentWorkTimer != null) currentWorkTimer.cancel();
         currentWorkTimer = new Timer();
         int delay = randInt(1, 5) * 1000;
@@ -116,7 +102,6 @@ public class OpcDemoMethodManagerListener implements CallableListener {
                     e.printStackTrace();
                 }
                 currentWorkTimer = null;
-                sendEvent(2);
             }
         }, delay);
     }

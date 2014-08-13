@@ -9,12 +9,16 @@ See the document "OSW TN009 - TMT CSW PACKAGING SOFTWARE DESIGN DOCUMENT" for a 
 Prosys OPC UA Dependency
 ----------------------------
 
-Before compiling, you need to manually copy (or make links to) these two jar files to 
-the hardware/lib directory and
-the testclient/lib directory:
+Before compiling, you need to manually copy (or better, make links to) these two jar files:
 
 * Opc.Ua.Stack-1.02.335.6.jar
 * Prosys-OPC-UA-Java-SDK-Client-Server-Evaluation-2.0.0-194.jar
+
+in the following directories (create the lib dir if it does not exist):
+
+* hardware/lib
+* container2/lib
+* testclient/lib
 
 The other dependencies are all available from repositories and are automatically downloaded.
 
@@ -39,8 +43,11 @@ Note: See <a href="https://github.com/tmtsoftware/csw-extjs">csw-extjs</a> for h
 based web UI used below. You need to install and run some "sencha" commands once to prepare the web app, otherwise
 the generated CSS file will not be found and the web app will not display properly.
 
-Running
--------
+See the <a href="https://github.com/tmtsoftware/csw-opc-ua/testclient">testclient README</a> for instructions on
+setting up the performance test.
+
+Running the Container/ExtJS Demo
+--------------------------------
 
 To run the demo: Open terminal windows or tabs in these directories and run these commands:
 

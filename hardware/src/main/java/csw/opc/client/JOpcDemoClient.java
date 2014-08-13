@@ -412,9 +412,7 @@ public class JOpcDemoClient {
         EventFilter filter = createEventFilter(eventFieldNames);
 
         // Create the item
-        MonitoredEventItem eventItem = new MonitoredEventItem(nodeId, filter);
-//        eventItem.setEventListener(eventListener);
-        return eventItem;
+        return new MonitoredEventItem(nodeId, filter);
     }
 
 //    private String eventFieldsToString(QualifiedName[] fieldNames, Variant[] fieldValues) {
@@ -527,19 +525,19 @@ public class JOpcDemoClient {
         client.call(deviceNodeId, perfTestNodeId, inputs);
     }
 
-    /**
-     * Returns the current value of the perfTestVar OPC variable
-     */
-    public int getPerfTestVar() throws ServiceException, StatusException {
-        return client.readAttribute(perfTestVarNodeId, Attributes.Value).getValue().intValue();
-    }
-
-
-    public Integer[] getAnalogArrayVarValue() throws ServiceException, StatusException {
-        return (Integer[])client.readAttribute(analogArrayVarNodeId, Attributes.Value).getValue().getValue();
-    }
-
-    public Integer[] getStaticArrayVarValue() throws ServiceException, StatusException {
-        return (Integer[])client.readAttribute(staticArrayVarNodeId, Attributes.Value).getValue().getValue();
-    }
+//    /**
+//     * Returns the current value of the perfTestVar OPC variable
+//     */
+//    public int getPerfTestVar() throws ServiceException, StatusException {
+//        return client.readAttribute(perfTestVarNodeId, Attributes.Value).getValue().intValue();
+//    }
+//
+//
+//    public Integer[] getAnalogArrayVarValue() throws ServiceException, StatusException {
+//        return (Integer[])client.readAttribute(analogArrayVarNodeId, Attributes.Value).getValue().getValue();
+//    }
+//
+//    public Integer[] getStaticArrayVarValue() throws ServiceException, StatusException {
+//        return (Integer[])client.readAttribute(staticArrayVarNodeId, Attributes.Value).getValue().getValue();
+//    }
 }
