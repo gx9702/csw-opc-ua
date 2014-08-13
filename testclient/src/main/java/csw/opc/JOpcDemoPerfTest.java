@@ -19,8 +19,10 @@ public class JOpcDemoPerfTest {
     private static Logger log = Logger.getLogger(JOpcDemoPerfTest.class);
     private static DateTime startTime;
 
+    private final JOpcDemoClient client;
+
     JOpcDemoPerfTest(String host, int count, int delay, int testNo) throws Exception {
-        JOpcDemoClient client = initClient(host, count, delay, testNo);
+        client = initClient(host, count, delay, testNo);
 
         // Start a performance test on the server, setting an OPC variable count times, with the given
         // delay in ms between settings. Args:
@@ -94,6 +96,7 @@ public class JOpcDemoPerfTest {
                 log.info("Done: Received " + count + " static array variable updates in " + secs + " seconds (" + rate + "/sec), delay in ms was: " + delay);
                 break;
         }
+        client.disconnect();
         System.exit(0);
     }
 

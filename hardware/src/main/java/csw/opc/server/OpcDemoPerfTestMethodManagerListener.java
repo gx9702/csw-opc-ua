@@ -124,6 +124,7 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
                     long t = stopTime.getTimeInMillis() - startTime.getTimeInMillis();
                     logResults(t / 1000.0, count, delay, testNo);
                 }
+                DateTime t = DateTime.currentTime();
                 switch (testNo) {
                     case 0:
                         // just send event
@@ -131,12 +132,12 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
                         break;
                     case 1:
                         // change scalar variable
-                        opcVar.setCurrentValue(i++);
-//                        try {
-//                            opcVar.setValue(new DataValue(new Variant(i++), StatusCode.GOOD, DateTime.currentTime(), DateTime.currentTime()));
-//                        } catch (StatusException e) {
-//                            e.printStackTrace();
-//                        }
+//                        opcVar.setCurrentValue(i++);
+                        try {
+                            opcVar.setValue(new DataValue(new Variant(i++), StatusCode.GOOD, t, t));
+                        } catch (StatusException e) {
+                            e.printStackTrace();
+                        }
                         break;
                     default:
                         i++;
@@ -148,10 +149,10 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
                         try {
                             if (testNo == 2) {
                                 // change analog array variable
-                                analogArrayNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, DateTime.currentTime(), DateTime.currentTime()));
+                                analogArrayNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, t, t));
                             } else {
                                 // change static array variable
-                                staticArrayNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, DateTime.currentTime(), DateTime.currentTime()));
+                                staticArrayNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, t, t));
                             }
                         } catch (StatusException e) {
                             e.printStackTrace();

@@ -123,6 +123,9 @@ public class JOpcDemoClient {
 
         @Override
         public void onEvent(Subscription subscription, MonitoredEventItem item, Variant[] eventFields) {
+            DateTime t = (DateTime)eventFields[3].getValue();
+            long ms = DateTime.currentTime().getMilliSeconds() - t.getMilliSeconds(); // XXX
+            log.info("Server event to client time in ms: " + ms);
             listener.onEvent(eventFields[eventFieldNames.length - 2].intValue());
         }
 
@@ -134,7 +137,7 @@ public class JOpcDemoClient {
 
         @Override
         public void onNotificationData(Subscription subscription, NotificationData notification) {
-            log.info("XXX SubscriptionNotificationListener.onNotificationData");
+//            log.info("XXX SubscriptionNotificationListener.onNotificationData");
         }
 
         @Override
@@ -233,6 +236,10 @@ public class JOpcDemoClient {
             } catch (ServerConnectionException | ServiceException e) {
                 printException(e);
             }
+    }
+
+    public void disconnect() {
+        client.disconnect();
     }
 
     /**
@@ -391,6 +398,8 @@ public class JOpcDemoClient {
         dataItem.setDataChangeListener(new MonitoredDataItemListener() {
             @Override
             public void onDataChange(MonitoredDataItem sender, DataValue prevValue, DataValue value) {
+                long ms = DateTime.currentTime().getMilliSeconds() - value.getSourceTimestamp().getMilliSeconds();
+                log.info("Server to client time in ms: " + ms);
                 if (nodeId == filterNodeId) {
                     listener.filterChanged(value.getValue().toString());
                 } else if (nodeId == disperserNodeId) {
