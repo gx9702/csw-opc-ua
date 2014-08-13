@@ -204,9 +204,9 @@ public class OpcDemoServer {
         // "Safety limits" for ill-behaving clients
         server.getSessionManager().setMaxSessionCount(500);
         server.getSessionManager().setMaxSessionTimeout(3600000); // one hour
-        server.getSubscriptionManager().setMaxSubscriptionCount(500);
 
-        // You can do your own additions to server initializations here
+        server.getSubscriptionManager().setMaxSubscriptionCount(500);
+        server.getSubscriptionManager().setMaxRetransmissionQueueSize(100000);
     }
 
 

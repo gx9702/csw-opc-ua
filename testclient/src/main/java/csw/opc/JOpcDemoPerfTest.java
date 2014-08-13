@@ -115,8 +115,10 @@ public class JOpcDemoPerfTest {
         // The variable to set: 1: scalar value, 2: analog array, 3: static array
         int testNo = 0;
 
-        if (args.length == 4) {
+        if (args.length > 0) {
             host = args[0];
+        }
+        if (args.length == 4) {
             count = Integer.valueOf(args[1]);
             delay = Integer.valueOf(args[2]);
             testNo = Integer.valueOf(args[3]);
