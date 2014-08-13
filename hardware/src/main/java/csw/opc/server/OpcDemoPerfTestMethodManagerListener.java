@@ -16,12 +16,15 @@ import org.opcfoundation.ua.core.StatusCodes;
 import java.util.Arrays;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 // Creates a 'perfTest' OPC method that continually sets the pertTestVar OPC variable to different values in a
 // background thread.
 // The perfTest method takes three int arguments:
 // * count: The number of times to increment the variable,
-// * delay: The delay in ms between settings.
+// * delay: The delay in μs between settings.
 // * testNo: If 0, send event, otherwise: The variable to set: 1: scalar value, 2: analog array, 3: static array
 public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
     private static Logger log = Logger.getLogger(OpcDemoPerfTestMethodManagerListener.class);
@@ -65,9 +68,6 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
             opcVar.setMinimumSamplingInterval(delay / 2.0);
             analogArrayNode.setMinimumSamplingInterval(delay / 2.0);
             staticArrayNode.setMinimumSamplingInterval(delay / 2.0);
-//            opcVar.setMinimumSamplingInterval(1.0);
-//            analogArrayNode.setMinimumSamplingInterval(1.0);
-//            staticArrayNode.setMinimumSamplingInterval(1.0);
 
             simulateBackgroundWork(count, delay, testNo);
 
@@ -111,15 +111,15 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
 
     // Starts a background thread that continuously sets the OPC variable (given by testNo)
     private void simulateBackgroundWork(final int count, final int delay, final int testNo) {
-        final Timer timer = new Timer();
-        timer.scheduleAtFixedRate(new TimerTask() {
+        final ScheduledExecutorService service = Executors.newSingleThreadScheduledExecutor();
+        Runnable task = new Runnable() {
             private int i = 0;
             private DateTime startTime = DateTime.currentTime();
 
             @Override
             public void run() {
                 if (i >= count) {
-                    timer.cancel();
+                    service.shutdown();
                     DateTime stopTime = DateTime.currentTime();
                     long t = stopTime.getTimeInMillis() - startTime.getTimeInMillis();
                     logResults(t / 1000.0, count, delay, testNo);
@@ -160,23 +160,25 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
                         break;
                 }
             }
-        }, delay, delay);
+        };
+
+        service.scheduleAtFixedRate(task, delay, delay, TimeUnit.MICROSECONDS);
     }
 
     // Log results of performance test
     private void logResults(double secs, int count, int delay, int testNo) {
         switch (testNo) {
             case 0:
-                log.info("Done: Sent " + count + " events in " + secs + " seconds, delay in ms was: " + delay);
+                log.info("Done: Sent " + count + " events in " + secs + " seconds, delay in μs was: " + delay);
                 break;
             case 1:
-                log.info("Done: Updated scalar variable " + count + " times in " + secs + " seconds, delay in ms was: " + delay);
+                log.info("Done: Updated scalar variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
                 break;
             case 2:
-                log.info("Done: Updated analog array variable " + count + " times in " + secs + " seconds, delay in ms was: " + delay);
+                log.info("Done: Updated analog array variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
                 break;
             case 3:
-                log.info("Done: Updated static array variable " + count + " times in " + secs + " seconds, delay in ms was: " + delay);
+                log.info("Done: Updated static array variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
                 break;
         }
 

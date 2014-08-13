@@ -123,9 +123,9 @@ public class JOpcDemoClient {
 
         @Override
         public void onEvent(Subscription subscription, MonitoredEventItem item, Variant[] eventFields) {
-            DateTime t = (DateTime)eventFields[3].getValue();
-            long ms = DateTime.currentTime().getMilliSeconds() - t.getMilliSeconds(); // XXX
-            log.info("Server event to client time in ms: " + ms);
+//            DateTime t = (DateTime)eventFields[3].getValue();
+//            long ms = DateTime.currentTime().getMilliSeconds() - t.getMilliSeconds();
+//            log.info("Server event to client time in ms: " + ms);
             listener.onEvent(eventFields[eventFieldNames.length - 2].intValue());
         }
 
@@ -375,17 +375,8 @@ public class JOpcDemoClient {
                 sub.addItem(eventItem);
             } else {
                 MonitoredDataItem dataItem = createMonitoredDataItem(nodeId, attributeId);
-
-                if (nodeId == perfTestVarNodeId) {
-                    dataItem.setSamplingInterval(0.0); // 0 means use fastest rate
-                    dataItem.setQueueSize(100);
-                } else if (nodeId == analogArrayVarNodeId) {
-                    dataItem.setSamplingInterval(0.0); // ms
-                    dataItem.setQueueSize(100);
-                } else if (nodeId == staticArrayVarNodeId) {
-                    dataItem.setSamplingInterval(0.0); // ms
-                    dataItem.setQueueSize(100);
-                }
+                dataItem.setSamplingInterval(0.0); // 0 means use fastest rate
+                dataItem.setQueueSize(100);
                 // Set the filter if you want to limit data changes
                 dataItem.setDataChangeFilter(null);
                 sub.addItem(dataItem);
@@ -398,8 +389,8 @@ public class JOpcDemoClient {
         dataItem.setDataChangeListener(new MonitoredDataItemListener() {
             @Override
             public void onDataChange(MonitoredDataItem sender, DataValue prevValue, DataValue value) {
-                long ms = DateTime.currentTime().getMilliSeconds() - value.getSourceTimestamp().getMilliSeconds();
-                log.info("Server to client time in ms: " + ms);
+//                long ms = DateTime.currentTime().getMilliSeconds() - value.getSourceTimestamp().getMilliSeconds();
+//                log.info("Server to client time in ms: " + ms);
                 if (nodeId == filterNodeId) {
                     listener.filterChanged(value.getValue().toString());
                 } else if (nodeId == disperserNodeId) {
@@ -524,9 +515,9 @@ public class JOpcDemoClient {
 
     /**
      * Starts a performance test, setting an OPC variable count times, with the given
-     * delay in ms between settings.
+     * delay in μs between settings.
      * @param count number of times to set the OPC variable
-     * @param delay sleep time in ms between settings
+     * @param delay sleep time in μs between settings
      * @param testNo The variable to set: 1: scalar value, 2: analog array, 3: static array
      */
     public void startPerfTest(int count, int delay, int testNo)

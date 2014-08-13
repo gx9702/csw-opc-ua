@@ -104,7 +104,7 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
     // background thread.
     // The perfTest method takes three int arguments:
     // * The number of times to increment the variable,
-    // * The delay in ms between settings.
+    // * The delay in μs between settings.
     // * The variable to set: 1: scalar value, 2: analog array, 3: static array
     private void createPerfTestMethodNode(PlainVariable<Integer> perfTestVar,
                                           AnalogItemType analogArrayNode, UaVariableNode staticArrayNode) throws StatusException {
@@ -126,7 +126,7 @@ public class OpcDemoNodeManager extends NodeManagerUaNode {
         inputs[1].setDataType(Identifiers.Integer);
         inputs[1].setValueRank(ValueRanks.Scalar);
         inputs[1].setArrayDimensions(null);
-        inputs[1].setDescription(new LocalizedText("Delay in ms", Locale.ENGLISH));
+        inputs[1].setDescription(new LocalizedText("Delay in μs", Locale.ENGLISH));
 
         inputs[2] = new Argument();
         inputs[2].setName("testNo");

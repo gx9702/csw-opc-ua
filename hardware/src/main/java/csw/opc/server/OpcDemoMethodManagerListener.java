@@ -8,10 +8,7 @@ import com.prosysopc.ua.server.MethodManager;
 import com.prosysopc.ua.server.ServiceContext;
 import com.prosysopc.ua.server.nodes.PlainVariable;
 import org.apache.log4j.Logger;
-import org.opcfoundation.ua.builtintypes.DiagnosticInfo;
-import org.opcfoundation.ua.builtintypes.NodeId;
-import org.opcfoundation.ua.builtintypes.StatusCode;
-import org.opcfoundation.ua.builtintypes.Variant;
+import org.opcfoundation.ua.builtintypes.*;
 import org.opcfoundation.ua.core.StatusCodes;
 
 import java.util.Arrays;
@@ -111,7 +108,13 @@ public class OpcDemoMethodManagerListener implements CallableListener {
         currentWorkTimer.schedule(new TimerTask() {
             @Override
             public void run() {
-                opcVar.setCurrentValue(value);
+//                opcVar.setCurrentValue(value);
+                try {
+                    DateTime t = DateTime.currentTime();
+                    opcVar.setValue(new DataValue(new Variant(value), StatusCode.GOOD, t, t));
+                } catch (StatusException e) {
+                    e.printStackTrace();
+                }
                 currentWorkTimer = null;
                 sendEvent(2);
             }

@@ -7,12 +7,12 @@ import org.opcfoundation.ua.builtintypes.DateTime;
 
 /**
  * Starts a performance test, setting an OPC variable or firing an OPC event count times,
- * with the given delay in ms between settings.
+ * with the given delay in &mu;s between settings.
  *
  * The command line args: (specify all four, or none for the default values):
  *  hostname: host where OPC server is running (default: localhost)
  *  count: number of times to set the OPC variable
- *  delay: sleep time in ms between settings
+ *  delay: sleep time in &mu;s between settings
  *  testNo: The variable to set: 1: scalar value, 2: analog array, 3: static array
  */
 public class JOpcDemoPerfTest {
@@ -25,7 +25,7 @@ public class JOpcDemoPerfTest {
         client = initClient(host, count, delay, testNo);
 
         // Start a performance test on the server, setting an OPC variable count times, with the given
-        // delay in ms between settings. Args:
+        // delay in &mu;s between settings. Args:
         startTime = DateTime.currentTime();
         client.startPerfTest(count, delay, testNo);
     }
@@ -69,7 +69,7 @@ public class JOpcDemoPerfTest {
 
             @Override
             public void onEvent(int value) {
-                log.info("event " + value);
+//                log.info("event " + value);
                 if (value >= count) {
                     logResults(count, delay, testNo);
                 }
@@ -84,16 +84,16 @@ public class JOpcDemoPerfTest {
         double rate = count / secs;
         switch (testNo) {
             case 0:
-                log.info("Done: Received " + count + " events in " + secs + " seconds (" + rate + "/sec), delay in ms was: " + delay);
+                log.info("Done: Received " + count + " events in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
                 break;
             case 1:
-                log.info("Done: Received " + count + " variable updates in " + secs + " seconds (" + rate + "/sec), delay in ms was: " + delay);
+                log.info("Done: Received " + count + " variable updates in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
                 break;
             case 2:
-                log.info("Done: Received " + count + " analog array variable updates in " + secs + " seconds (" + rate + "/sec), delay in ms was: " + delay);
+                log.info("Done: Received " + count + " analog array variable updates in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
                 break;
             case 3:
-                log.info("Done: Received " + count + " static array variable updates in " + secs + " seconds (" + rate + "/sec), delay in ms was: " + delay);
+                log.info("Done: Received " + count + " static array variable updates in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
                 break;
         }
         client.disconnect();
@@ -107,13 +107,13 @@ public class JOpcDemoPerfTest {
         String host = "localhost";
 
         // number of times to set the OPC variable
-        int count = 1000;
+        int count = 100000;
 
-        // sleep time in ms between settings
+        // sleep time in &mu;s between settings
         int delay = 100;
 
         // The variable to set: 1: scalar value, 2: analog array, 3: static array
-        int testNo = 2;
+        int testNo = 0;
 
         if (args.length == 4) {
             host = args[0];
