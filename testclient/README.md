@@ -9,7 +9,8 @@ Dependencies
 ------------
 
 This project depends on the ../hardware project, which contains the OPC UA server,
-which needs to be running before the client starts for this test.
+which needs to be running before the client starts for this test. It also depends on
+the csw/csw/pkg project.
 
 Build
 -----
@@ -22,20 +23,26 @@ Running
 To run the test client: Open terminal windows or tabs in these directories and run these commands:
 
 * cd hardware/target/universal/stage/bin; ./hardware -Dlog4j.configuration=log.properties
-* cd testclient/target/universal/stage/bin; ./testclient -Dlog4j.configuration=log.properties localhost 10000 1 2
+* cd testclient/target/universal/stage/bin; ./testclient -Dlog4j.configuration=log.properties localhost 100000 100 0
 
-Note that currently, the test results are not valid unless both the server and client are started new each time.
-Currently the client exits without cleaning up, which might cause the problem.
+Note that currently, the test results may not be valid unless both the server and client are started new each time.
+If you restart the client without restarting the server, it will use the same id and might receive events from
+methods started in the previous session.
 
-Command line arguments
-----------------------
+testclient Command line arguments
+---------------------------------
 
-(Specify all four arguments, or none for the default values):
+You can specify only the server host name, all four arguments, or no args for the default values:
 
 *  hostname: host where OPC server is running (default: localhost)
-*  count: number of times to set the OPC variable or fire the event (default: 1000)
-*  delay: sleep time in ms between settings or events (default: 100)
-*  testNo: The variable to set: 0: events, 1: scalar value, 2: analog array, 3: static array (default: 2)
+*  count: number of times to set the OPC variable or fire the event (default: 100000)
+*  delay: sleep time in microsec between settings or events (default: 100)
+*  testNo:
+- 0: send events,
+- 1: set a scalar variable,
+- 2: set an analog array value,
+- 3: set a static array value
+(default: 0)
 
 The test client prints out statistics after the count is reached. 
 
