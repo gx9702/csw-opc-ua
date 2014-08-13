@@ -37,12 +37,11 @@ You can specify only the server host name, all four arguments, or no args for th
 *  hostname: host where OPC server is running (default: localhost)
 *  count: number of times to set the OPC variable or fire the event (default: 100000)
 *  delay: sleep time in microsec between settings or events (default: 100)
-*  testNo:
-- 0: send events,
-- 1: set a scalar variable,
-- 2: set an analog array value,
-- 3: set a static array value
-(default: 0)
+*  testNo: 0 to 4 to indicate the performance test to run (default: 0, events):
+    - 0: send events,
+    - 1: set a scalar variable,
+    - 2: set an analog array value,
+    - 3: set a static array value
 
 The test client prints out statistics after the count is reached. 
 
