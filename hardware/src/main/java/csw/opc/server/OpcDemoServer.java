@@ -209,6 +209,8 @@ public class OpcDemoServer {
 
         server.getSubscriptionManager().setMaxSubscriptionCount(500);
         server.getSubscriptionManager().setMaxRetransmissionQueueSize(100000);
+
+        server.getSubscriptionManager().setMinSamplingInterval(0); // fastest: default is 1 ms
     }
 
 
