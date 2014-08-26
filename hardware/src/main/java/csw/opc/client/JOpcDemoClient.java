@@ -379,6 +379,7 @@ public class JOpcDemoClient {
         if (!sub.hasItem(nodeId, attributeId)) {
             if (Objects.equals(attributeId, Attributes.EventNotifier)) {
                 MonitoredEventItem eventItem = createMonitoredEventItem(nodeId);
+                log.info("XXX eventItem.getSamplingInterval(): " + eventItem.getSamplingInterval());
                 sub.addItem(eventItem);
             } else {
                 MonitoredDataItem dataItem = createMonitoredDataItem(nodeId, attributeId);

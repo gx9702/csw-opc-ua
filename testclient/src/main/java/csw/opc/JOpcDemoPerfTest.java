@@ -21,6 +21,11 @@ public class JOpcDemoPerfTest {
 
     private final JOpcDemoClient client;
 
+    private int receivedEvents = 0;
+    private int receivedVarUpdates = 0;
+    private int receivedAnalogArrayUpdates = 0;
+    private int receivedStaticArrayUpdates = 0;
+
     JOpcDemoPerfTest(String host, int count, int delay, int testNo) throws Exception {
         client = initClient(host, count, delay, testNo);
 
@@ -45,33 +50,33 @@ public class JOpcDemoPerfTest {
 
             @Override
             public void perfTestVarChanged(int value) {
-                log.info("perfTestVar changed to: " + value);
+                receivedVarUpdates++;
                 if (value >= count) {
-                    logResults(count, delay, testNo);
+                    logResults(receivedVarUpdates, count, delay, testNo);
                 }
             }
 
             @Override
             public void analogArrayVarChanged(Integer[] value) {
-                log.info("analogArrayVar[0] changed to: " + value[0]);
+                receivedAnalogArrayUpdates++;
                 if (value[0] >= count) {
-                    logResults(count, delay, testNo);
+                    logResults(receivedAnalogArrayUpdates, count, delay, testNo);
                 }
             }
 
             @Override
             public void staticArrayVarChanged(Integer[] value) {
-                log.info("staticArrayVar[0] changed to: " + value[0]);
+                receivedStaticArrayUpdates++;
                 if (value[0] >= count) {
-                    logResults(count, delay, testNo);
+                    logResults(receivedStaticArrayUpdates, count, delay, testNo);
                 }
             }
 
             @Override
             public void onEvent(int value) {
-//                log.info("event " + value);
+                receivedEvents++;
                 if (value >= count) {
-                    logResults(count, delay, testNo);
+                    logResults(receivedEvents, count, delay, testNo);
                 }
             }
         });
@@ -79,21 +84,30 @@ public class JOpcDemoPerfTest {
 
 
     // Log results of performance test
-    private void logResults(int count, int delay, int testNo) {
+    private void logResults(int count, int expected, int delay, int testNo) {
         double secs = (DateTime.currentTime().getTimeInMillis() - startTime.getTimeInMillis()) / 1000.0;
-        double rate = count / secs;
+        double rate = Math.round(count / secs);
+        double expectedRate = Math.round(expected / secs);
         switch (testNo) {
             case 0:
-                log.info("Done: Received " + count + " events in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
+                log.info("Done: Received " + count + " of expected " + expected + " events in " + secs
+                        + " seconds (" + rate + "/sec, with skipped " + expectedRate + "/sec), delay in microsecs was: "
+                        + delay);
                 break;
             case 1:
-                log.info("Done: Received " + count + " variable updates in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
+                log.info("Done: Received " + count + " of expected " + expected + " variable updates in " + secs
+                        + " seconds (" + rate + "/sec, with skipped " + expectedRate + "/sec), delay in microsecs was: "
+                        + delay);
                 break;
             case 2:
-                log.info("Done: Received " + count + " analog array variable updates in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
+                log.info("Done: Received " + count + " of expected " + expected + " analog array variable updates in " + secs
+                        + " seconds (" + rate + "/sec, with skipped " + expectedRate + "/sec), delay in microsecs was: "
+                        + delay);
                 break;
             case 3:
-                log.info("Done: Received " + count + " static array variable updates in " + secs + " seconds (" + rate + "/sec), delay in μs was: " + delay);
+                log.info("Done: Received " + count + " of expected " + expected + " static array variable updates in " + secs
+                        + " seconds (" + rate + "/sec, with skipped: " + expectedRate + "/sec), delay in microsecs was: "
+                        + delay);
                 break;
         }
         client.disconnect();
