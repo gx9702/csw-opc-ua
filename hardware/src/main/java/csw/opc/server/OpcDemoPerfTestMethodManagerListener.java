@@ -126,11 +126,12 @@ public class OpcDemoPerfTestMethodManagerListener implements CallableListener {
 
             @Override
             public void run() {
-                if (i >= count) {
+                if (i > count) {
                     service.shutdown();
                     DateTime stopTime = DateTime.currentTime();
                     long t = stopTime.getTimeInMillis() - startTime.getTimeInMillis();
                     logResults(t / 1000.0, count, delay, testNo);
+                    i = 0; // reset below for next test
                 }
                 DateTime t = DateTime.currentTime();
                 switch (testNo) {

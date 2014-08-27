@@ -61,6 +61,8 @@ public class JOpcDemoPerfTest {
                 receivedAnalogArrayUpdates++;
                 if (value[0] >= count) {
                     logResults(receivedAnalogArrayUpdates, count, delay, testNo);
+                } else if (value[0] % 100 == 0) {
+                    log.info("Analog array (10000 ints) updated: " + value[0]);
                 }
             }
 
@@ -69,6 +71,8 @@ public class JOpcDemoPerfTest {
                 receivedStaticArrayUpdates++;
                 if (value[0] >= count) {
                     logResults(receivedStaticArrayUpdates, count, delay, testNo);
+                } else if (value[0] % 100 == 0) {
+                    log.info("Static array (10000 ints) updated: " + value[0]);
                 }
             }
 

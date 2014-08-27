@@ -384,7 +384,7 @@ public class JOpcDemoClient {
             } else {
                 MonitoredDataItem dataItem = createMonitoredDataItem(nodeId, attributeId);
                 dataItem.setSamplingInterval(0.0); // 0 means use fastest rate
-                dataItem.setQueueSize(100);
+                dataItem.setQueueSize(100000); // XXX should configure from outside?
                 // Set the filter if you want to limit data changes
                 dataItem.setDataChangeFilter(null);
                 sub.addItem(dataItem);
