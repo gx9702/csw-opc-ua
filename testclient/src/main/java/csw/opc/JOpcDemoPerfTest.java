@@ -53,6 +53,8 @@ public class JOpcDemoPerfTest {
                 receivedVarUpdates++;
                 if (value >= count) {
                     logResults(receivedVarUpdates, count, delay, testNo);
+                } else if (value % 100 == 0) {
+                    log.info("Test var updated: " + value);
                 }
             }
 
