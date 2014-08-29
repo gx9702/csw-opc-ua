@@ -39,6 +39,9 @@ object Dependencies {
   val httpcoreNio    = "org.apache.httpcomponents"    % "httpcore-nio"            % "4.2.4"
   val log4j          = "log4j"                        % "log4j"                   % "1.2.17"
 
+  // log4j+logstash
+  val jsoneventLayout = "net.logstash.log4j"          % "jsonevent-layout"        % "1.6"
+
   // csw packages (installed with sbt publish-local)
   val pkg            = "org.tmt"                       %% "pkg"                     % "1.0"
 

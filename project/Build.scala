@@ -19,7 +19,7 @@ object Build extends Build {
     conf -> "bin/log.properties"
   }).settings(libraryDependencies ++=
     provided(akkaActor) ++
-      compile(bcpkix, bcprov, commonsLogging, httpclient, httpcore, httpcoreNio, log4j) ++
+      compile(bcpkix, bcprov, commonsLogging, httpclient, httpcore, httpcoreNio, log4j, jsoneventLayout) ++
       test(scalaTest)
     )
 
