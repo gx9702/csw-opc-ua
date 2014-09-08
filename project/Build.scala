@@ -14,37 +14,32 @@ object Build extends Build {
 
   lazy val hardware = project
     .settings(packageSettings: _*)
-    .settings(mappings in Universal <+= (packageBin in Compile, sourceDirectory) map { (_, src) =>
-    val conf = src / "main" / "resources" / "log.properties"
-    conf -> "bin/log.properties"
-  }).settings(libraryDependencies ++=
+    .settings(bashScriptExtraDefines ++= Seq("addJava -Dapplication-name=hardware"))
+    .settings(libraryDependencies ++=
     provided(akkaActor) ++
-      compile(bcpkix, bcprov, commonsLogging, httpclient, httpcore, httpcoreNio, log4j, jsoneventLayout) ++
+      compile(log, bcpkix, bcprov, commonsLogging, httpclient, httpcore, httpcoreNio, log4jOverSlf4j, jsoneventLayout) ++
       test(scalaTest)
     )
 
   lazy val testclient = project
     .settings(packageSettings: _*)
-    .settings(mappings in Universal <+= (packageBin in Compile, sourceDirectory) map { (_, src) =>
-    val conf = src / "main" / "resources" / "log.properties"
-    conf -> "bin/log.properties"
-  }).dependsOn(hardware)
+    .settings(bashScriptExtraDefines ++= Seq("addJava -Dapplication-name=testclient"))
+    .dependsOn(hardware)
 
   lazy val container1 = project
     .settings(packageSettings: _*)
-    .settings(bashScriptExtraDefines ++= Seq(s"addJava -Dcsw.extjs.root=" + file("../csw-extjs").absolutePath))
+    .settings(bashScriptExtraDefines ++= Seq(s"addJava -Dapplication-name=container1 -Dcsw.extjs.root="
+      + file("../csw-extjs").absolutePath))
     .settings(libraryDependencies ++=
     provided(akkaActor) ++
-      compile(akkaKernel, akkaRemote, pkg)
+      compile(akkaKernel, akkaRemote, pkg, log)
     )
 
   lazy val container2 = project
     .settings(packageSettings: _*)
-    .settings(mappings in Universal <+= (packageBin in Compile, sourceDirectory) map { (_, src) =>
-    val conf = src / "main" / "resources" / "log.properties"
-    conf -> "bin/log.properties"
-  }).settings(libraryDependencies ++=
+    .settings(bashScriptExtraDefines ++= Seq("addJava -Dapplication-name=container2"))
+    .settings(libraryDependencies ++=
     provided(akkaActor) ++
-      compile(akkaKernel, akkaRemote, pkg)
+      compile(akkaKernel, akkaRemote, pkg, log)
     ).dependsOn(hardware)
 }

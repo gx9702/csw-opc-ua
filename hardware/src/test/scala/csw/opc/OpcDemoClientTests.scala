@@ -1,13 +1,12 @@
 package csw.opc
 
 import csw.opc.client.OpcDemoClient
-import org.apache.log4j.{Logger, PropertyConfigurator}
+import org.apache.log4j.Logger
 import org.scalatest.DoNotDiscover
 
 // This test requires that OpcDemoServer server is running
 @DoNotDiscover
 object OpcDemoClientTests extends App {
-  PropertyConfigurator.configureAndWatch(classOf[OpcDemoClient].getResource("/log.properties").getFile, 5000)
   val log = Logger.getLogger(classOf[OpcDemoClient])
 
   val client = new OpcDemoClient(new OpcDemoClient.Listener() {

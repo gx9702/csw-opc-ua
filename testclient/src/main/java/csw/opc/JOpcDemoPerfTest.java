@@ -2,7 +2,6 @@ package csw.opc;
 
 import csw.opc.client.JOpcDemoClient;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.opcfoundation.ua.builtintypes.DateTime;
 
 /**
@@ -121,8 +120,6 @@ public class JOpcDemoPerfTest {
     }
 
     public static void main(String[] args) throws Exception {
-        PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("/log.properties").getFile(), 5000);
-
         // The server host
         String host = "localhost";
 

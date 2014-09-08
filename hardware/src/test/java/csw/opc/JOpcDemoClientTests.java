@@ -2,7 +2,6 @@ package csw.opc;
 
 import csw.opc.client.JOpcDemoClient;
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.scalatest.DoNotDiscover;
 
 // This test requires that OpcDemoServer server is running
@@ -11,9 +10,6 @@ public class JOpcDemoClientTests {
     private static Logger log = Logger.getLogger(JOpcDemoClientTests.class);
 
     public static void main(String[] args) throws Exception {
-        // Load Log4j configurations from external file
-        PropertyConfigurator.configureAndWatch(JOpcDemoClient.class.getResource("/log.properties").getFile(), 5000);
-
         final JOpcDemoClient client = new JOpcDemoClient("localhost", new JOpcDemoClient.Listener() {
 
             @Override

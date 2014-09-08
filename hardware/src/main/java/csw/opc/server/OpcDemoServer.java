@@ -7,7 +7,6 @@ import java.util.GregorianCalendar;
 import java.util.Locale;
 
 import org.apache.log4j.Logger;
-import org.apache.log4j.PropertyConfigurator;
 import org.opcfoundation.ua.builtintypes.DateTime;
 import org.opcfoundation.ua.builtintypes.LocalizedText;
 import org.opcfoundation.ua.core.ApplicationDescription;
@@ -42,8 +41,6 @@ public class OpcDemoServer {
     public static final String APP_NAME = "SampleConsoleServer";
 
     public static void main(String[] args) throws Exception {
-        // Initialize log4j logging
-        PropertyConfigurator.configureAndWatch(OpcDemoServer.class.getResource("/log.properties").getFile(), 5000);
 
         // *** Initialization and Start Up
         OpcDemoServer opcDemoServer = new OpcDemoServer();
