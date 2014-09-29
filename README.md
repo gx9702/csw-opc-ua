@@ -9,10 +9,11 @@ See the document "OSW TN009 - TMT CSW PACKAGING SOFTWARE DESIGN DOCUMENT" for a 
 Prosys OPC UA Dependency
 ----------------------------
 
-Before compiling, you need to manually copy (or better, make links to) these two jar files:
+Before compiling, you need to manually copy (or better, make links to) these two jar files from
+the Prosys OPC UA distribution:
 
-* Opc.Ua.Stack-1.02.335.6.jar
-* Prosys-OPC-UA-Java-SDK-Client-Server-Evaluation-2.0.0-194.jar
+* Opc.Ua.Stack-*.jar
+* Prosys-OPC-UA-Java-SDK-Client-Server-*.jar
 
 in the following directories (create the lib dir if it does not exist):
 
