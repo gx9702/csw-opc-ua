@@ -9,7 +9,7 @@ import com.typesafe.sbt.SbtNativePackager._
 object Settings {
   val Version = "0.1-SNAPSHOT"
 
-  val buildSettings = Defaults.defaultSettings ++ Seq (
+  val buildSettings = Seq (
     organization := "org.tmt",
     organizationName := "TMT",
     organizationHomepage := Some(url("http://www.tmt.org")),
@@ -31,9 +31,8 @@ object Settings {
 
   lazy val defaultSettings = buildSettings ++ Seq(
     // compile options
-    scalacOptions ++= Seq("-encoding", "UTF-8", "-deprecation", "-unchecked"),
-//    javacOptions in Compile ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked", "-Xlint:deprecation")
-    javacOptions in Compile ++= Seq("-encoding", "UTF-8")
+    scalacOptions ++= Seq("-target:jvm-1.7", "-encoding", "UTF-8", "-feature", "-deprecation", "-unchecked"),
+    javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked", "-Xlint:deprecation")
   )
 
   // For standalone applications
