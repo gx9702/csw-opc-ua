@@ -27,7 +27,13 @@ object Dependencies {
   val httpcore       = "org.apache.httpcomponents"    % "httpcore"                % "4.2.4"
   val httpcoreNio    = "org.apache.httpcomponents"    % "httpcore-nio"            % "4.2.4"
 //  val log4j          = "log4j"                        % "log4j"                   % "1.2.17"
-  val log4jOverSlf4j = "org.slf4j"                  % "log4j-over-slf4j"        % "1.7.7"
+  val log4jOverSlf4j = "org.slf4j"                  % "log4j-over-slf4j"          % "1.7.7"
+
+  // opc-ua-stack, opc-ua-sdk
+  // See sbt/maven parent pom bug: https://github.com/sbt/sbt/issues/1616
+  val serverSdk       = "com.inductiveautomation.opcua" % "server-sdk"             % "0.2.0-SNAPSHOT"
+  // XXX temp
+//  val guave = "com.google.guava" % "guava" % "17.0"
 
   // log4j+logstash
   val jsoneventLayout = "net.logstash.log4j"          % "jsonevent-layout"        % "1.6"

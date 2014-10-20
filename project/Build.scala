@@ -21,6 +21,14 @@ object Build extends Build {
       test(scalaTest)
     )
 
+  lazy val opcuasdktest = project
+    .settings(packageSettings: _*)
+    .settings(bashScriptExtraDefines ++= Seq("addJava -Dapplication-name=opcuasdktest"))
+    .settings(libraryDependencies ++=
+    provided(akkaActor) ++
+      compile(log, serverSdk) ++
+      test(scalaTest)
+    )
   lazy val testclient = project
     .settings(packageSettings: _*)
     .settings(bashScriptExtraDefines ++= Seq("addJava -Dapplication-name=testclient"))

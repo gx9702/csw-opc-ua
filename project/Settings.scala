@@ -24,15 +24,15 @@ object Settings {
 //    resolvers += "Spray nightlies" at "http://nightlies.spray.io",
     resolvers += Resolver.sonatypeRepo("releases"),
 //    resolvers += Resolver.sonatypeRepo("snapshots"),
-    resolvers += "mDialog releases" at "http://mdialog.github.io/releases/"
+    resolvers += "mDialog releases" at "http://mdialog.github.io/releases/",
     // local maven repo
-//    resolvers += "Local Maven" at Path.userHome.asFile.toURI.toURL + ".m2/repository"
+    resolvers += "Local Maven" at Path.userHome.asFile.toURI.toURL + ".m2/repository"
   )
 
   lazy val defaultSettings = buildSettings ++ Seq(
     // compile options
     scalacOptions ++= Seq("-target:jvm-1.7", "-encoding", "UTF-8", "-feature", "-deprecation", "-unchecked"),
-    javacOptions in (Compile, compile) ++= Seq("-source", "1.7", "-target", "1.7", "-Xlint:unchecked", "-Xlint:deprecation")
+    javacOptions in (Compile, compile) ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-Xlint:deprecation")
   )
 
   // For standalone applications
