@@ -14,16 +14,11 @@
  * limitations under the License.
  */
 
-package csw.opc.opcuasdktest;
+package csw.opc.opcuasdktest.server;
 
 import com.inductiveautomation.opcua.sdk.server.OpcUaServer;
 import com.inductiveautomation.opcua.sdk.server.api.OpcUaServerConfig;
 import com.inductiveautomation.opcua.stack.core.UaException;
-import com.inductiveautomation.opcua.stack.core.application.services.ServiceRequest;
-import com.inductiveautomation.opcua.stack.core.application.services.TestServiceSet;
-import com.inductiveautomation.opcua.stack.core.types.builtin.DateTime;
-import com.inductiveautomation.opcua.stack.core.types.builtin.StatusCode;
-import com.inductiveautomation.opcua.stack.core.types.structured.*;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -31,7 +26,13 @@ import java.util.concurrent.Future;
 public class OpcUaDemoServer {
 
     public static void main(String[] args) throws Exception {
-        OpcUaDemoServer server = new OpcUaDemoServer(new OpcUaDemoServerConfig());
+        int eventSize = 256;
+        if (args.length > 0) eventSize = Integer.valueOf(args[0]);
+
+        int delay = 100; // delay in microseconds (should be same as client arg for performance test)
+        if (args.length > 1) delay = Integer.valueOf(args[1]);
+
+        OpcUaDemoServer server = new OpcUaDemoServer(new OpcUaDemoServerConfig(), eventSize, delay);
 
         Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 
@@ -43,7 +44,7 @@ public class OpcUaDemoServer {
 
     private final OpcUaServer server;
 
-    public OpcUaDemoServer(OpcUaServerConfig config) {
+    public OpcUaDemoServer(OpcUaServerConfig config, int eventSize, int delay) {
         server = new OpcUaServer(config);
 
         server.getNamespaceManager().getNamespaceTable().putUri(
@@ -51,31 +52,7 @@ public class OpcUaDemoServer {
                 OpcUaDemoNamespace.NamespaceIndex
         );
 
-        server.getNamespaceManager().addNamespace(new OpcUaDemoNamespace(server));
-
-        server.getServer().addServiceSet(new TestServiceSet() {
-            @Override
-            public void onTestStack(ServiceRequest<TestStackRequest, TestStackResponse> serviceRequest) throws UaException {
-                TestStackRequest request = serviceRequest.getRequest();
-
-                serviceRequest.setResponse(new TestStackResponse(header(request.getRequestHeader()), request.getInput()));
-            }
-
-            @Override
-            public void onTestStackEx(ServiceRequest<TestStackExRequest, TestStackExResponse> serviceRequest) throws UaException {
-                TestStackExRequest request = serviceRequest.getRequest();
-
-                serviceRequest.setResponse(new TestStackExResponse(header(request.getRequestHeader()), request.getInput()));
-            }
-
-            private ResponseHeader header(RequestHeader header) {
-                return new ResponseHeader(
-                        DateTime.now(),
-                        header.getRequestHandle(),
-                        StatusCode.Good,
-                        null, new String[0], null);
-            }
-        });
+        server.getNamespaceManager().addNamespace(new OpcUaDemoNamespace(server, eventSize, delay));
     }
 
     public void startup() throws UaException {

@@ -9,10 +9,10 @@ import org.opcfoundation.ua.builtintypes.DateTime;
  * with the given delay in &mu;s between settings.
  *
  * The command line args: (specify all four, or none for the default values):
- *  hostname: host where OPC server is running (default: localhost)
- *  count: number of times to set the OPC variable
- *  delay: sleep time in &mu;s between settings
- *  testNo: The variable to set: 1: scalar value, 2: analog array, 3: static array
+ *  <p>hostname: host where OPC server is running (default: localhost)</p>
+ *  <p>count: number of times to set the OPC variable</p>
+ *  <p>delay: sleep time in &mu;s between settings</p>
+ *  <p>testNo: The variable to set: 1: scalar value, 2: analog array, 3: static array</p>
  */
 public class JOpcDemoPerfTest {
     private static Logger log = Logger.getLogger(JOpcDemoPerfTest.class);
@@ -52,7 +52,7 @@ public class JOpcDemoPerfTest {
                 receivedVarUpdates++;
                 if (value >= count) {
                     logResults(receivedVarUpdates, count, delay, testNo);
-                } else if (value % 100 == 0) {
+                } else if (true || value % 100 == 0) {
                     log.info("Test var updated: " + value);
                 }
             }

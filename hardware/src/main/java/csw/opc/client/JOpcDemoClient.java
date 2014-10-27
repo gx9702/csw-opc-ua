@@ -27,7 +27,6 @@ public class JOpcDemoClient {
 
     private static String APP_NAME = "OpcDemoClient";
     private static Logger log = Logger.getLogger(JOpcDemoClient.class);
-//    String NAMESPACE = "http://www.tmt.org/opcua/demoAddressSpace"; // OpcDemoNodeManager.NAMESPACE
     private static String NAMESPACE = OpcDemoNodeManager.NAMESPACE;
 
     // Listen for changes in the filter or disperser variable values after calling one of the set* OPC methods
@@ -189,7 +188,8 @@ public class JOpcDemoClient {
         connect();
 
         // XXX FIXME do this in a handler whenever connected
-        int ns = client.getAddressSpace().getNamespaceTable().getIndex(NAMESPACE);
+//        int ns = client.getAddressSpace().getNamespaceTable().getIndex(NAMESPACE);
+        int ns = 2; // XXX above doesn't work with opc-ua-sdk
         deviceNodeId = new NodeId(ns, "OpcDemoDevice");
         filterNodeId = new NodeId(ns, "Filter");
         disperserNodeId = new NodeId(ns, "Disperser");
@@ -455,7 +455,8 @@ public class JOpcDemoClient {
 
     private void initEventFieldNames() throws StatusException {
         if (eventFieldNames[eventFieldNames.length - 1] == null) {
-            int ns = client.getNamespaceTable().getIndex(NAMESPACE);
+//            int ns = client.getNamespaceTable().getIndex(NAMESPACE);
+            int ns = 2; // XXX above doesn't work with opc-ua-sdk
             eventFieldNames[eventFieldNames.length - 2] = new QualifiedName(ns, OpcDemoEventType.DEMO_VARIABLE_NAME);
             eventFieldNames[eventFieldNames.length - 1] = new QualifiedName(ns, OpcDemoEventType.DEMO_PROPERTY_NAME);
         }

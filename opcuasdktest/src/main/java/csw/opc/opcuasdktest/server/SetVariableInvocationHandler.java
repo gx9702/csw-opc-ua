@@ -1,7 +1,7 @@
-package csw.opc.opcuasdktest;
+package csw.opc.opcuasdktest.server;
 
 import com.inductiveautomation.opcua.sdk.server.api.MethodInvocationHandler;
-import com.inductiveautomation.opcua.sdk.server.api.nodes.UaVariableNode;
+import com.inductiveautomation.opcua.sdk.server.nodes.UaVariableNode;
 import com.inductiveautomation.opcua.stack.core.StatusCodes;
 import com.inductiveautomation.opcua.stack.core.types.builtin.DataValue;
 import com.inductiveautomation.opcua.stack.core.types.builtin.DiagnosticInfo;

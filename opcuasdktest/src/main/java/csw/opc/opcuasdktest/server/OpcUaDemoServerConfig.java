@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-package csw.opc.opcuasdktest;
+package csw.opc.opcuasdktest.server;
 
 import com.inductiveautomation.opcua.sdk.server.api.OpcUaServerConfig;
-import com.inductiveautomation.opcua.sdk.server.objects.OperationLimits;
-import com.inductiveautomation.opcua.sdk.server.objects.ServerCapabilities;
 import com.inductiveautomation.opcua.stack.core.security.SecurityPolicy;
 import com.inductiveautomation.opcua.stack.core.types.builtin.LocalizedText;
 import com.inductiveautomation.opcua.stack.core.types.structured.SignedSoftwareCertificate;
 import org.slf4j.LoggerFactory;
 
-import java.security.*;
+import java.security.Key;
+import java.security.KeyPair;
+import java.security.KeyStore;
+import java.security.PrivateKey;
+import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.util.EnumSet;
 
@@ -58,6 +60,9 @@ public class OpcUaDemoServerConfig implements OpcUaServerConfig {
     }
 
     @Override
+    public int getBindPort() { return 52520; }
+
+    @Override
     public LocalizedText getApplicationName() {
         return LocalizedText.english("OPC-UA Demo Server");
     }
@@ -69,7 +74,12 @@ public class OpcUaDemoServerConfig implements OpcUaServerConfig {
 
     @Override
     public String getServerName() {
-        return "OpcDemoServer";
+        return "OPCUA/SampleConsoleServer";
+    }
+
+    @Override
+    public String getProductUri() {
+        return "http://www.inductiveautomation.com/opc-ua/stack";
     }
 
     @Override
@@ -85,30 +95,5 @@ public class OpcUaDemoServerConfig implements OpcUaServerConfig {
     @Override
     public EnumSet<SecurityPolicy> getSecurityPolicies() {
         return EnumSet.of(SecurityPolicy.None, SecurityPolicy.Basic128Rsa15);
-    }
-
-    @Override
-    public ServerCapabilities getServerCapabilities() {
-        return new ServerCapabilities() {
-            @Override
-            public double getMinSupportedSampleRate() {
-                return 100;
-            }
-
-            @Override
-            public String[] getServerProfileArray() {
-                return new String[0];
-            }
-
-            @Override
-            public SignedSoftwareCertificate[] getSoftwareCertificates() {
-                return new SignedSoftwareCertificate[0];
-            }
-
-            @Override
-            public OperationLimits getOperationLimits() {
-                return new OperationLimits() {};
-            }
-        };
     }
 }
