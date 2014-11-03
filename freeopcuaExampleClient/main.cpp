@@ -1,15 +1,3 @@
-/// @author Alexander Rykovanov 2013
-/// @email rykovanov.as@gmail.com
-/// @brief Remote Computer implementaion.
-/// @license GNU GPL
-///
-/// Distributed under the GNU GPL License
-/// (See accompanying file LICENSE or copy at
-/// http://www.gnu.org/licenses/gpl.html)
-///
-
-
-
 #include <opc/ua/client/client.h>
 #include <opc/ua/node.h>
 #include <opc/ua/subscription.h>

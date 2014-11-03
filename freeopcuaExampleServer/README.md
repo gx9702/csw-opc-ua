@@ -1,0 +1,45 @@
+freeopcExampleServer
+====================
+
+This directory contains an example C++ freeopcua serever that works together with 
+../freeopcuaExampleClient to run performance tests.
+
+Dependencies
+------------
+
+Before building, you need to build and install freeopcua.
+The version I tested with was checked out from: https://github.com/oroulet/freeopcua.
+I originally attempted to build under CentOs-6, but had problems with the required dependencies.
+Upgrading to CentOs-7 and installing the necessary dependencies (by trial and error) worked.
+
+Build
+-----
+
+The build uses cmake, since at the time, this was a requirement, in order to use the Intellij CLion IDE. 
+Typing `cmake .` in this directory produces a Makefile. Then just type `make`.
+You can open this directory with CLion to generate a project.
+
+Running
+-------
+
+Start the `freeopcuaExampleServer` executable.
+
+Command Line Arguments
+----------------------
+
+The arguments are all optional (TODO: add named options...)
+
+Note: Here we have more args than the java version, since OPC methods are not implemented yet in freeopcua.
+
+* host - hostname to bind to (default: localhost)
+* port - port to listen on: default (localhost 52520)
+* count - number of times to set the OPC variable or fire the event (default: 100000))
+* delay - sleep time in microsec between settings or events (default: 100)
+* testNo: 0 to 4 to indicate the performance test to run (default: 1, scalar var):
+      - 0: send events,
+      - 1: set a scalar variable,
+      - 2: set an analog array value,
+      - 3: set a static array value
+* eventSize - size of the event payload (default: 512 bytes)
+
+
