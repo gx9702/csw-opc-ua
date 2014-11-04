@@ -24,22 +24,20 @@ Running
 
 Start the `freeopcuaExampleServer` executable.
 
-Command Line Arguments
+Command Line Options
 ----------------------
-
-The arguments are all optional (TODO: add named options...)
 
 Note: Here we have more args than the java version, since OPC methods are not implemented yet in freeopcua.
 
-* host - hostname to bind to (default: localhost)
-* port - port to listen on: default (localhost 52520)
-* count - number of times to set the OPC variable or fire the event (default: 100000))
-* delay - sleep time in microsec between settings or events (default: 100)
-* testNo: 0 to 4 to indicate the performance test to run (default: 1, scalar var):
+* -host _hostname_ - hostname to bind to (default: localhost)
+* -port _port_ - port to listen on: default (localhost 52520)
+* -count _count_ - number of times to set the OPC variable or fire the event (default: 100000))
+* -delay _delay_ - sleep time in microsec between settings or events (default: 100)
+* -testNo _testNo_: 0 to 4 to indicate the performance test to run (default: 1, scalar var):
       - 0: send events,
       - 1: set a scalar variable,
       - 2: set an analog array value,
       - 3: set a static array value
-* eventSize - size of the event payload (default: 512 bytes)
+* -eventSize _eventSize_ - size of the event payload (default: 512 bytes)
 
 

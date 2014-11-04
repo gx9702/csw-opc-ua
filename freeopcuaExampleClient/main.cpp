@@ -1,58 +1,18 @@
-#include <opc/ua/client/client.h>
-#include <opc/ua/node.h>
-#include <opc/ua/subscription.h>
-#include <opc/ua/event.h>
 
 #include <iostream>
-#include <stdexcept>
-#include <unistd.h>
+#include <sstream>
+#include <string.h>
+#include "ExampleClient.h"
+
+void usage() {
+    std::cout << "Usage: " << std::endl;
+    // XXX TODO
+    exit(1);
+}
 
 
-using namespace OpcUa;
-
-static int receivedVarUpdates = 0;
-
-class SubClient : public SubscriptionClient
-{
-private:
-    int testNo = 1;
-    DateTime startTime= OpcUa::CurrentDateTime();
-public:
-    virtual void Event(uint32_t handle, OpcUa::Event const &event) const override {
-        receivedUpdate();
-    }
-
-    void DataChange(uint32_t handle, const Node& node, const Variant& val, AttributeID attr) const override
-    {
-//        receivedVarUpdates++;
-////        int value = val.As<int>();
-////        std::cout << "Received DataChange event, value of Node " << node << " is now: " << value << std::endl;
-//        if (receivedVarUpdates % 1000 == 0) {
-//            logResults(receivedVarUpdates, testNo);
-//        }
-        receivedUpdate();
-    }
-
-    void receivedUpdate() const {
-        receivedVarUpdates++;
-        if (receivedVarUpdates % 1000 == 0) {
-            logResults(receivedVarUpdates, testNo);
-        }
-    }
-
-    // Log results of performance test
-    void logResults(int count, int testNo) const {
-        double secs = OpcUa::ToTimeT(OpcUa::CurrentDateTime()) - OpcUa::ToTimeT(startTime);
-        double rate = count / secs;
-        std::cout << "Received " << count << " updates in " << secs << " seconds, rate = " << rate << "/sec" << std::endl;
-    }
-
-public:
-    SubClient(int testNo) :testNo(testNo) {
-    }
-};
-
-
+// freeopcuaExampleClient main
+//
 // optional args: (Note: more args than the java version, since OPC methods are not implemented yet)
 //
 // host - hostname to bind to (default: localhost)
@@ -67,62 +27,30 @@ public:
 // eventSize - size of the event payload (default: 512 bytes)
 int main(int argc, const char** argv)
 {
-    try
-    {
-        const char* host = (argc > 1) ? argv[1] : "localhost";
-        int port = (argc > 2) ? atoi(argv[2]) : 52520;
-        int count = (argc > 3) ? atoi(argv[3]) : 1000000;
-        int delay = (argc > 4) ? atoi(argv[4]) : 10;
-        int testNo = (argc > 5) ? atoi(argv[5]) : 1;
-        int eventSize = (argc > 6) ? atoi(argv[6]) : 512;
+    if (--argc % 2 != 0) usage();
 
-        std::ostringstream uri;
-        uri << "opc.tcp://" << host << ":" << port << "/OPCUA/SampleConsoleServer";
-        std::string endpoint = uri.str();
+    const char *host = "localhost";
+    int port = 52520;
+    int count = 1000000;
+    int delay = 10;
+    int testNo = 1;
+    int eventSize = 512;
 
-        std::cout << "Connecting to: " << endpoint << std::endl;
-        OpcUa::RemoteClient client(endpoint);
-        client.Connect();
-
-        OpcUa::Node root = client.GetRootNode();
-        std::cout << "Root node is: " << root << std::endl;
-        std::vector<std::string> path({"Objects", "Server"});
-        OpcUa::Node server = root.GetChild(path);
-        std::cout << "Server node obtained by path: " << server << std::endl;
-
-        std::cout << "Child of objects node are: " << std::endl;
-        for (OpcUa::Node node : client.GetObjectsNode().GetChildren())
-            std::cout << "    " << node << std::endl;
-
-        // Subscription: perfTestVar
-        std::vector<std::string> perfTestVarPath({"Objects", "2:OpcDemoDevice", "2:perfTestVar"});
-        OpcUa::Node perfTestVar = root.GetChild(perfTestVarPath);
-        std::cout << "got perfTestVar node: " << perfTestVar << std::endl;
-
-        // Subscription: StaticInt32Array
-        std::vector<std::string> staticArrayVarPath({"Objects", "2:OpcDemoDevice", "2:StaticInt32Array"});
-        OpcUa::Node staticArrayVar = root.GetChild(staticArrayVarPath);
-        std::cout << "got staticArrayVar node: " << staticArrayVar << std::endl;
-
-        SubClient sclt(testNo);
-        std::unique_ptr<Subscription> sub = client.CreateSubscription(1, sclt);
-        uint32_t handle1 = sub->SubscribeDataChange(perfTestVar);
-        uint32_t handle2 = sub->SubscribeDataChange(staticArrayVar);
-        sub->SubscribeEvents(); // XXX TODO FIXME: Add filter for events
-//        std::cout << "Got sub handle: " << handle1 << ", sleeping..." << std::endl;
-
-        sleep(10000000); // XXX secs
-        std::cout << "Disconnecting" << std::endl;
-        return 0;
+    for(int i = 0; i < argc; i += 2) {
+        const char* option = argv[i];
+        const char* value = argv[i+1];
+        if (strcmp(option, "-host") == 0) host = value;
+        else if (strcmp(option, "-port") == 0) port = atoi(value);
+        else if (strcmp(option, "-count") == 0) count = atoi(value);
+        else if (strcmp(option, "-delay") == 0) delay = atoi(value);
+        else if (strcmp(option, "-testNo") == 0) testNo = atoi(value);
+        else if (strcmp(option, "-eventSize") == 0) eventSize = atoi(value);
+        else usage();
     }
-    catch (const std::exception& exc)
-    {
-        std::cout << exc.what() << std::endl;
-    }
-    catch (...)
-    {
-        std::cout << "Unknown error." << std::endl;
-    }
+
+    ExampleClient client(host, port,count,delay, testNo, eventSize);
+    client.start();
+
     return -1;
 }
 
