@@ -19,7 +19,6 @@ package csw.opc.opcuasdktest.server;
 import com.inductiveautomation.opcua.sdk.server.api.OpcUaServerConfig;
 import com.inductiveautomation.opcua.stack.core.security.SecurityPolicy;
 import com.inductiveautomation.opcua.stack.core.types.builtin.LocalizedText;
-import com.inductiveautomation.opcua.stack.core.types.structured.SignedSoftwareCertificate;
 import org.slf4j.LoggerFactory;
 
 import java.security.Key;
