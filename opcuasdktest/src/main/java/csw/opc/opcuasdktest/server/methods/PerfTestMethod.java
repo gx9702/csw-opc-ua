@@ -1,31 +1,25 @@
-package csw.opc.opcuasdktest.server;
+package csw.opc.opcuasdktest.server.methods;
 
-import com.inductiveautomation.opcua.sdk.server.api.MethodInvocationHandler;
-import com.inductiveautomation.opcua.sdk.server.nodes.UaVariableNode;
-import com.inductiveautomation.opcua.stack.core.StatusCodes;
+import com.inductiveautomation.opcua.sdk.server.model.UaVariableNode;
+import com.inductiveautomation.opcua.sdk.server.util.AnnotationBasedInvocationHandler;
+import com.inductiveautomation.opcua.sdk.server.util.UaInputArgument;
+import com.inductiveautomation.opcua.sdk.server.util.UaMethod;
+import com.inductiveautomation.opcua.sdk.server.util.UaOutputArgument;
 import com.inductiveautomation.opcua.stack.core.types.builtin.DataValue;
 import com.inductiveautomation.opcua.stack.core.types.builtin.DateTime;
-import com.inductiveautomation.opcua.stack.core.types.builtin.DiagnosticInfo;
 import com.inductiveautomation.opcua.stack.core.types.builtin.StatusCode;
 import com.inductiveautomation.opcua.stack.core.types.builtin.Variant;
-import com.inductiveautomation.opcua.stack.core.types.structured.CallMethodRequest;
-import com.inductiveautomation.opcua.stack.core.types.structured.CallMethodResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Arrays;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
+public class PerfTestMethod {
 
-/**
- * Handler for the setFilter and setDisperser methods
- */
-class PerfTestInvocationHandler implements MethodInvocationHandler {
-
-    private final Logger log = LoggerFactory.getLogger(getClass());
+    private final Logger logger = LoggerFactory.getLogger(getClass());
 
     UaVariableNode opcVar;
     UaVariableNode analogArrayNode;
@@ -35,10 +29,10 @@ class PerfTestInvocationHandler implements MethodInvocationHandler {
     // The event payload, for performance testing
     private final String eventPayload;
 
-    public PerfTestInvocationHandler(UaVariableNode opcVar,
-                                     UaVariableNode analogArrayNode,
-                                     UaVariableNode staticArrayNode,
-                                     int eventSize) {
+    public PerfTestMethod(UaVariableNode opcVar,
+                          UaVariableNode analogArrayNode,
+                          UaVariableNode staticArrayNode,
+                          int eventSize) {
         this.opcVar = opcVar;
         this.analogArrayNode = analogArrayNode;
         this.staticArrayNode = staticArrayNode;
@@ -49,44 +43,38 @@ class PerfTestInvocationHandler implements MethodInvocationHandler {
         this.eventPayload = new String(array);
     }
 
-    @Override
-    public void invoke(CallMethodRequest request, CompletableFuture<CallMethodResult> result) {
-        Variant[] inputs = request.getInputArguments();
+    @UaMethod
+    public void invoke(
+            AnnotationBasedInvocationHandler.InvocationContext context,
 
-        if (inputs.length != 3) {
-            result.complete(new CallMethodResult(
-                    new StatusCode(StatusCodes.Bad_ArgumentsMissing),
-                    new StatusCode[0],
-                    new DiagnosticInfo[0],
-                    new Variant[0]
-            ));
-        }
+            @UaInputArgument(
+                    name = "count",
+                    description = "Number of iterations for test.")
+            Integer count,
 
-        for (Variant input : inputs) {
-            if (!(input.getValue() instanceof Integer)) {
-                result.complete(new CallMethodResult(
-                        new StatusCode(StatusCodes.Bad_TypeMismatch),
-                        new StatusCode[]{new StatusCode(StatusCodes.Bad_TypeMismatch)},
-                        new DiagnosticInfo[0],
-                        new Variant[0]
-                ));
-                return;
-            }
-        }
+            @UaInputArgument(
+                    name = "delay",
+                    description = "Number of microsecs between iterations.")
+            Integer delay,
 
-        int count = (Integer) inputs[0].getValue();
-        int delay = (Integer) inputs[1].getValue();
-        int testNo = (Integer) inputs[2].getValue();
+            @UaInputArgument(
+                    name = "testNo",
+                    description = "Test to run (0 - 3).")
+            Integer testNo,
+
+            @UaOutputArgument(
+                    name = "result",
+                    description = "True if the arguments were valid and the test could be started")
+            AnnotationBasedInvocationHandler.Out<Boolean> result) {
+
+        logger.debug(String.format("Invoking perfTest method of Object '%s'",
+                context.getObjectNode().getBrowseName().getName()));
+
 //        opcVar.setMinimumSamplingInterval(Optional.of(delay / 2.0));
 //        staticArrayNode.setMinimumSamplingInterval(Optional.of(delay / 2.0));
         simulateBackgroundWork(count, delay, testNo);
 
-        result.complete(new CallMethodResult(
-                StatusCode.Good,
-                new StatusCode[]{StatusCode.Good},
-                new DiagnosticInfo[0],
-                new Variant[]{new Variant(true)}
-        ));
+        result.set(true);
     }
 
     // Starts a background thread that continuously sets the OPC variable (given by testNo)
@@ -136,16 +124,16 @@ class PerfTestInvocationHandler implements MethodInvocationHandler {
     private void logResults(double secs, int count, int delay, int testNo) {
         switch (testNo) {
             case 0:
-                log.info("Done: Sent " + count + " events in " + secs + " seconds, delay in μs was: " + delay);
+                logger.info("Done: Sent " + count + " events in " + secs + " seconds, delay in μs was: " + delay);
                 break;
             case 1:
-                log.info("Done: Updated scalar variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
+                logger.info("Done: Updated scalar variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
                 break;
             case 2:
-                log.info("Done: Updated analog array variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
+                logger.info("Done: Updated analog array variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
                 break;
             case 3:
-                log.info("Done: Updated static array variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
+                logger.info("Done: Updated static array variable " + count + " times in " + secs + " seconds, delay in μs was: " + delay);
                 break;
         }
 
@@ -159,4 +147,5 @@ class PerfTestInvocationHandler implements MethodInvocationHandler {
 //        ev.setPropertyValue(eventPayload);
 //        ev.triggerEvent(null);
     }
+
 }
