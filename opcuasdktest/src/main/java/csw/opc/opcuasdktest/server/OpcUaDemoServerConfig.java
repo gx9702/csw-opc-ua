@@ -16,6 +16,7 @@
 
 package csw.opc.opcuasdktest.server;
 
+import com.google.common.collect.Lists;
 import com.inductiveautomation.opcua.sdk.server.api.OpcUaServerConfig;
 import com.inductiveautomation.opcua.stack.core.security.SecurityPolicy;
 import com.inductiveautomation.opcua.stack.core.types.builtin.LocalizedText;
@@ -28,6 +29,7 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.security.cert.Certificate;
 import java.util.EnumSet;
+import java.util.List;
 
 public class OpcUaDemoServerConfig implements OpcUaServerConfig {
 
@@ -36,8 +38,12 @@ public class OpcUaDemoServerConfig implements OpcUaServerConfig {
 
     private volatile Certificate certificate;
     private volatile KeyPair keyPair;
+    private String host;
+    private int port;
 
-    public OpcUaDemoServerConfig() {
+    public OpcUaDemoServerConfig(String host, int port) {
+        this.host = host;
+        this.port = port;
         try {
             KeyStore keyStore = KeyStore.getInstance("PKCS12");
 
@@ -59,7 +65,12 @@ public class OpcUaDemoServerConfig implements OpcUaServerConfig {
     }
 
     @Override
-    public int getBindPort() { return 52520; }
+    public int getBindPort() { return port; }
+
+    @Override
+    public List<String> getBindAddresses() {
+        return Lists.newArrayList(host);
+    }
 
     @Override
     public LocalizedText getApplicationName() {
