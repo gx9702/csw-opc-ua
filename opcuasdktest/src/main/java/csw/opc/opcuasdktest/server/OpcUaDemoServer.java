@@ -25,14 +25,27 @@ import java.util.concurrent.Future;
 
 public class OpcUaDemoServer {
 
+    private static void usage() {
+        System.out.println("Usage: "); // XXX TODO
+    }
+
     public static void main(String[] args) throws Exception {
+        if (args.length % 2 != 0) usage();
+
+        String host = "localhost";
+        int port = 52520;
         int eventSize = 256;
-        if (args.length > 0) eventSize = Integer.valueOf(args[0]);
-
         int delay = 100; // delay in microseconds (should be same as client arg for performance test)
-        if (args.length > 1) delay = Integer.valueOf(args[1]);
+        for(int i = 0; i < args.length; i += 2) {
+            String option = args[i];
+            String value = args[i+1];
+            if (option.equals("-host")) host = value;
+            else if (option.equals("-port")) port = Integer.valueOf(value);
+            else if (option.equals("-delay")) delay = Integer.valueOf(value);
+            else if (option.equals("-eventSize")) eventSize = Integer.valueOf(value);
+        }
 
-        OpcUaDemoServer server = new OpcUaDemoServer(new OpcUaDemoServerConfig(), eventSize, delay);
+        OpcUaDemoServer server = new OpcUaDemoServer(new OpcUaDemoServerConfig(host, port), eventSize, delay);
 
         Runtime.getRuntime().addShutdownHook(new Thread(server::shutdown));
 
