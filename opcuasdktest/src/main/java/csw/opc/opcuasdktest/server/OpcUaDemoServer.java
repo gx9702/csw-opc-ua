@@ -26,7 +26,7 @@ import java.util.concurrent.Future;
 public class OpcUaDemoServer {
 
     private static void usage() {
-        System.out.println("Usage: "); // XXX TODO
+        System.out.println("Usage: Optional args: -host host -port port -delay delayInMicroSecs -eventSize eventSizeInBytes");
     }
 
     public static void main(String[] args) throws Exception {
