@@ -5,8 +5,14 @@
 #include "ExampleClient.h"
 
 void usage() {
-    std::cout << "Usage: " << std::endl;
-    // XXX TODO
+    std::cout << "Usage: freeopcuaExampleClient [options]" << std::endl;
+    std::cout << "Options" << std::endl;
+    std::cout << " -host hostname" << std::endl;
+    std::cout << " -port port" << std::endl;
+    std::cout << " -count count" << std::endl;
+    std::cout << " -delay delay" << std::endl;
+    std::cout << " -testNo testNo" << std::endl;
+    std::cout << " -eventSize eventSize" << std::endl;
     exit(1);
 }
 
