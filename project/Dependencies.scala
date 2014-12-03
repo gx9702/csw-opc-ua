@@ -4,8 +4,8 @@ import sbt._
 
 object Dependencies {
 
-  val scalaVersion = "2.11.2"
-  val akkaVersion = "2.3.6"
+  val scalaVersion = "2.11.4"
+  val akkaVersion = "2.3.7"
 
   def compile   (deps: ModuleID*): Seq[ModuleID] = deps map (_ % "compile")
   def provided  (deps: ModuleID*): Seq[ModuleID] = deps map (_ % "provided")

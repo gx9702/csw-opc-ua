@@ -26,9 +26,6 @@ public class PerfTestMethod {
     UaVariableNode staticArrayNode;
     int eventSize = 0;
 
-    // The event payload, for performance testing
-    private final String eventPayload;
-
     public PerfTestMethod(UaVariableNode opcVar,
                           UaVariableNode analogArrayNode,
                           UaVariableNode staticArrayNode,
@@ -40,7 +37,6 @@ public class PerfTestMethod {
 
         final char[] array = new char[eventSize];
         Arrays.fill(array, 'x');
-        this.eventPayload = new String(array);
     }
 
     @UaMethod
@@ -102,7 +98,7 @@ public class PerfTestMethod {
                         break;
                     case 1:
                         // change scalar variable
-                        opcVar.setValue(new DataValue(new Variant(i), StatusCode.Good, t, t));
+                        opcVar.setValue(new DataValue(new Variant(i), StatusCode.GOOD, t, t));
                         break;
                     default:
                         // change array variable
@@ -111,7 +107,7 @@ public class PerfTestMethod {
                         Integer[] ar = (Integer[]) dv.getValue().getValue();
                         Integer[] ar2 = Arrays.copyOf(ar, ar.length);
                         ar2[0] = i;
-                        varNode.setValue(new DataValue(new Variant(ar2), StatusCode.Good, t, t));
+                        varNode.setValue(new DataValue(new Variant(ar2), StatusCode.GOOD, t, t));
                         break;
                 }
             }

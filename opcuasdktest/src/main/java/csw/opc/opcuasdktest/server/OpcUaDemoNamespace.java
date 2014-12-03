@@ -1,19 +1,3 @@
-/*
- * Copyright 2014 Inductive Automation
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
 package csw.opc.opcuasdktest.server;
 
 import com.google.common.collect.Lists;
@@ -81,7 +65,7 @@ public class OpcUaDemoNamespace implements UaNamespace {
 
         UaNode methodFolder = addMethodFolder(folderNode);
 
-        subscriptionModel = new SubscriptionModel(this, server.getExecutorService());
+        subscriptionModel = new SubscriptionModel(this, server.getExecutorService(), server.getScheduledExecutorService());
 
         addPlainVariable("Filter", Identifiers.String, new Variant("None"),
                 folderNode, Optional.of(methodFolder), delay);
@@ -147,7 +131,7 @@ public class OpcUaDemoNamespace implements UaNamespace {
                                   int delay) {
         UaVariableNode node = new UaVariableNode.UaVariableNodeBuilder(this)
                 .setNodeId(new NodeId(NamespaceIndex, name))
-                .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.ReadOnly)))
+                .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_ONLY)))
                 .setBrowseName(new QualifiedName(NamespaceIndex, name))
                 .setDisplayName(LocalizedText.english(name))
                 .setDescription(LocalizedText.english(name))
@@ -277,7 +261,7 @@ public class OpcUaDemoNamespace implements UaNamespace {
 
         UaVariableNode node = new UaVariableNode.UaVariableNodeBuilder(this)
                 .setNodeId(new NodeId(NamespaceIndex, name))
-                .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.ReadOnly)))
+                .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_ONLY)))
                 .setBrowseName(new QualifiedName(NamespaceIndex, name))
                 .setDisplayName(LocalizedText.english(name))
                 .setDataType(typeId)
@@ -424,7 +408,7 @@ public class OpcUaDemoNamespace implements UaNamespace {
                             o, writeValue.getAttributeId(), writeValue.getNodeId());
                 }
 
-                results.add(StatusCode.Good);
+                results.add(StatusCode.GOOD);
             } catch (UaException e) {
                 results.add(e.getStatusCode());
             }
