@@ -17,8 +17,8 @@ the Prosys OPC UA distribution:
 
 in the following directories (create the lib dir if it does not exist):
 
-* hardware/lib
-* container2/lib
+* hardwareopc/lib
+* container2opc/lib
 * testclient/lib
 
 The other dependencies are all available from repositories and are automatically downloaded.
@@ -26,19 +26,15 @@ The other dependencies are all available from repositories and are automatically
 Dependency on other CSW Projects
 --------------------------------
 
-This project depends on the pkg project in csw/csw, so you should run `sbt publishLocal` and `sbt stage` there.
+This project depends on the pkg project in csw/csw, so you should run `sbt publishLocal` and `sbt stage` there (or just run install.sh in csw/csw).
 
 
 Sbt Build
 ---------
 
-To compile, type "sbt" and then:
+For demonstration purposes, each project here has its own build.sbt.
 
-* compile
-* stage
-
-The stage task creates the distribution with the scripts for the applications
-(found under the target/universal/stage/bin directories).
+To compile, run ./install.sh to create an install directory (../install) containing all the necessary scripts and jar files.
 
 Note: See <a href="https://github.com/tmtsoftware/csw-extjs">csw-extjs</a> for how to setup the ExtJS
 based web UI used below. You need to install and run some "sencha" commands once to prepare the web app, otherwise
@@ -50,25 +46,23 @@ setting up the performance test.
 Running the Container/ExtJS Demo
 --------------------------------
 
-To run the demo: Open terminal windows or tabs in these directories and run these commands:
+Run the demo
+------------
 
-* cd hardware/target/universal/stage/bin; ./hardware
+To run the demo, there are scripts installed under ../install/bin:
 
-Start the location service (This has to be running before any HCDs or assemblies are started):
+* test_containers_with_opcua.sh - runs the OPC-UA hardware simulation code, the location service and the two containers
 
-* cd ../csw/loc/target/universal/stage/bin; ./loc
 
-Then start the two Akka containers (The order is not important here):
-
-* cd container2/target/universal/stage/bin; ./container2
-* cd container1/target/universal/stage/bin; ./container1
+Test with the web app
+---------------------
 
 * open http://localhost:8089 in a browser for the Ext JS version and select the development
 (JavaScript source) or production (compiled, minified) version. Note that you need to
 compile the ExtJS code at least once to get the required CSS file generated.
 See <a href="https://github.com/tmtsoftware/csw-extjs">csw-extjs</a> for instructions.
 
-Select the values in the form and press Submit. The status of the command is shown below the button and updated
+Select values in the form and press Submit. The status of the command is shown below the button and updated
 while the command is running.
 
 TODO: Add the ability to pause and restart the queue, pause, cancel or abort a command, etc.
