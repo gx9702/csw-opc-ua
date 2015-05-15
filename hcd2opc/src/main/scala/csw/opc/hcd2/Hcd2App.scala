@@ -22,5 +22,5 @@ object Hcd2App extends App {
   val regInfo = RegInfo(serviceId, Some(configPath), httpUri)
   val services = Nil
   val info = Component.create(props, regInfo, services)
-  info.lifecycleManager ! Startup
+  //info.lifecycleManager ! Startup
 }
