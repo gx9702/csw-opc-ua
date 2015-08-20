@@ -4,8 +4,9 @@ import akka.actor._
 import csw.opc.client.JOpcDemoClient
 import csw.services.cmd.akka.CommandQueueActor.SubmitWithRunId
 import csw.services.cmd.akka.ConfigActor._
-import csw.services.cmd.akka.{CommandStatus, ConfigActor, RunId}
+import csw.services.cmd.akka.ConfigActor
 import csw.util.cfg.Configurations._
+import csw.shared.{ RunId, CommandStatus }
 
 import scala.util.Success
 
@@ -122,7 +123,7 @@ class TestConfigActor(override val commandStatusActor: ActorRef, configKey: Stri
       case "disperser" => config.withValues("value" -> opcClient.getDisperser)
     }
 
-    sender() ! ConfigResponse(Success(confs))
+    replyTo ! ConfigResponse(Success(confs))
   }
 }
 
