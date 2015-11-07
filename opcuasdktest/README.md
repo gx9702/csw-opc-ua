@@ -6,7 +6,7 @@ This project contains a server based on the open source opc-ua-sdk toolkit.
 Dependencies
 ------------
 
-Currently you need to install all three projects found at https://github.com/inductiveautomation manually using maven
+Currently you need to install all three projects found at https://github.com/digitalpetri manually using maven
 (uanodeset-parser, opc-ua-stack, opc-ua-sdk: in that order).
 
 Running
