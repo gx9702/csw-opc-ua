@@ -54,6 +54,50 @@ public class Hcd2Namespace implements UaNamespace {
 
     public static final String NAMESPACE_PREFIX = "/Static/AllProfiles/Scalar/";
 
+    public static final String[] FILTERS = new String[]{
+            "None",
+            "g_G0301",
+            "r_G0303",
+            "i_G0302",
+            "z_G0304",
+            "Z_G0322",
+            "Y_G0323",
+            "GG455_G0305",
+            "OG515_G0306",
+            "RG610_G0307",
+            "CaT_G0309",
+            "Ha_G0310",
+            "HaC_G0311",
+            "DS920_G0312",
+            "SII_G0317",
+            "OIII_G0318",
+            "OIIIC_G0319",
+            "HeII_G0320",
+            "HeIIC_G0321",
+            "HartmannA_G0313 + r_G0303",
+            "HartmannB_G0314 + r_G0303",
+            "g_G0301 + GG455_G0305",
+            "g_G0301 + OG515_G0306",
+            "r_G0303 + RG610_G0307",
+            "i_G0302 + CaT_G0309",
+            "z_G0304 + CaT_G0309",
+            "u_G0308"
+    };
+
+    public static final String[] DISPERSERS = new String[]{
+            "Mirror",
+            "B1200_G5301",
+            "R831_G5302",
+            "B600_G5303",
+            "B600_G5307",
+            "R600_G5304",
+            "R400_G5305",
+            "R150_G5306"
+    };
+
+
+    // --
+
     private final Logger logger = LoggerFactory.getLogger(getClass());
 
     private final Map<NodeId, UaNode> nodes = Maps.newConcurrentMap();
@@ -63,6 +107,14 @@ public class Hcd2Namespace implements UaNamespace {
 
     private final OpcUaServer server;
     private final UShort namespaceIndex;
+
+    private final NodeId filterNodeId;
+    private final NodeId filterPosNodeId;
+    private final NodeId disperserNodeId;
+    private final NodeId disperserPosNodeId;
+
+
+    // --
 
     public Hcd2Namespace(OpcUaServer server, UShort namespaceIndex) {
         this.server = server;
@@ -92,12 +144,22 @@ public class Hcd2Namespace implements UaNamespace {
         subscriptionModel = new SubscriptionModel(server, this);
 
         addStaticScalarNodes();
+
+        filterNodeId = new NodeId(namespaceIndex, NAMESPACE_PREFIX + "filter");
+        filterPosNodeId = new NodeId(namespaceIndex, NAMESPACE_PREFIX + "filterPos");
+        disperserNodeId = new NodeId(namespaceIndex, NAMESPACE_PREFIX + "disperser");
+        disperserPosNodeId = new NodeId(namespaceIndex, NAMESPACE_PREFIX + "disperserPos");
     }
 
-
+    // For testing, the filter and disperser are the main variables that
+    // are set and read by the clients. The filterPos and dispeserPos variables
+    // are supposed to simulate variables that give the current positions as
+    // intermediate values while the device is moving to the demand position.
     private static final Object[][] STATIC_SCALAR_NODES = new Object[][]{
             {"filter", Identifiers.String, new Variant("None")},
-            {"disperser", Identifiers.String, new Variant("Mirror")}
+            {"filterPos", Identifiers.Int32, new Variant(0)},
+            {"disperser", Identifiers.String, new Variant("Mirror")},
+            {"disperserPos", Identifiers.Int32, new Variant(0)}
     };
 
     private void addStaticScalarNodes() {
@@ -109,7 +171,7 @@ public class Hcd2Namespace implements UaNamespace {
             Variant variant = (Variant) os[2];
 
             UaVariableNode node = new UaVariableNodeBuilder(this)
-                    .setNodeId(new NodeId(namespaceIndex, "/Static/AllProfiles/Scalar/" + name))
+                    .setNodeId(new NodeId(namespaceIndex, NAMESPACE_PREFIX + name))
                     .setAccessLevel(ubyte(AccessLevel.getMask(AccessLevel.READ_WRITE)))
                     .setBrowseName(new QualifiedName(namespaceIndex, name))
                     .setDisplayName(LocalizedText.english(name))
@@ -301,6 +363,15 @@ public class Hcd2Namespace implements UaNamespace {
 
         for (WriteValue writeValue : writeValues) {
             try {
+                Variant variant = writeValue.getValue().getValue();
+                String value = variant != null ? variant.getValue().toString() : null;
+                // XXX React when the filter value is set
+                if (writeValue.getNodeId().equals(filterNodeId)) {
+                    simulateDemandDelay("filter", value, filterPosNodeId, FILTERS);
+                } else if (writeValue.getNodeId().equals(disperserNodeId)) {
+                    simulateDemandDelay("disperser", value, disperserPosNodeId, DISPERSERS);
+                }
+
                 UaNode node = Optional.ofNullable(nodes.get(writeValue.getNodeId()))
                         .orElseThrow(() -> new UaException(StatusCodes.Bad_NodeIdUnknown));
 
@@ -311,10 +382,8 @@ public class Hcd2Namespace implements UaNamespace {
                         writeValue.getIndexRange());
 
                 if (logger.isTraceEnabled()) {
-                    Variant variant = writeValue.getValue().getValue();
-                    Object o = variant != null ? variant.getValue() : null;
                     logger.trace("Wrote value={} to attributeId={} of {}",
-                            o, writeValue.getAttributeId(), writeValue.getNodeId());
+                            value, writeValue.getAttributeId(), writeValue.getNodeId());
                 }
 
                 results.add(StatusCode.GOOD);
@@ -324,6 +393,24 @@ public class Hcd2Namespace implements UaNamespace {
         }
 
         context.complete(results);
+    }
+
+    // Simulate the filter or disperser wheel turning past different settings on its
+    // way to the demand setting...
+    private void simulateDemandDelay(String name, String value, NodeId posNodeId, String[] choices) {
+        logger.info("Setting " + name + " to = " + value);
+        UaVariableNode node = (UaVariableNode)nodes.get(posNodeId);
+        int currentPos = (Integer)node.getValue().getValue().getValue();
+        while (!choices[currentPos].equals(value)) {
+            try {
+                Thread.sleep(500);
+            } catch (Exception ex) {
+                logger.error("Can't sleep", ex);
+            }
+            currentPos = (currentPos + 1) % choices.length;
+            logger.info("Setting " + name + "Pos  to = " + currentPos);
+            node.setValue(new DataValue(new Variant(currentPos)));
+        }
     }
 
     @Override

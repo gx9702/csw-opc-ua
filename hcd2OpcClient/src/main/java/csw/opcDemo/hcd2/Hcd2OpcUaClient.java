@@ -30,6 +30,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import static com.digitalpetri.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 import static com.google.common.collect.Lists.newArrayList;
@@ -79,7 +80,7 @@ public class Hcd2OpcUaClient {
         return new OpcUaClient(config);
     }
 
-    public void subscribe(String name) throws Exception {
+    public void subscribe(String name, Consumer<DataValue> valueConsumer) throws Exception {
 
         // create a subscription and a monitored item
         UaSubscription subscription = client.getSubscriptionManager().createSubscription(1000.0).get(); // FIXME
@@ -107,13 +108,11 @@ public class Hcd2OpcUaClient {
 
         // do something with the value updates
         UaMonitoredItem item = items.get(0);
-
-        item.setValueConsumer(v -> {
-            logger.info("HCD {} subscriber: value received: {}", name, v.getValue());
-        });
+        item.setValueConsumer(valueConsumer);
     }
 
-    public void setValue(String name, Object value) throws Exception  {
+    // XXX just set the value
+    public void setValue(String name, Object value) throws Exception {
         Variant v = new Variant(value);
 
         // don't write status or timestamps
@@ -136,4 +135,13 @@ public class Hcd2OpcUaClient {
             logger.error("Write '{}' failed for nodeId={}", v, nodeIds.get(0));
         }
     }
+
+//    // XXX Hack - Step through the filter values, as if turning the wheel,
+//    // until the demand value is reached.
+//    // (Wanted to do this on the OPC server, but couldn't figure it out yet)
+//    public void setValue(String name, Object value) throws Exception {
+//        // XXX TODO...
+//        simpleSetValue(name, value);
+//    }
+
 }

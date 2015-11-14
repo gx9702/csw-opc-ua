@@ -59,13 +59,14 @@ def packageSettings(summary: String, desc: String) = defaultSettings ++
 
 // dependencies
 val pkg = "org.tmt" %% "pkg" % Version
+val log = "org.tmt" %% "log" % Version
 val containerCmd = "org.tmt" %% "containercmd" % Version
 val uaServer = "com.digitalpetri.opcua" % "ua-server" % "0.4.2"
 val uaClient = "com.digitalpetri.opcua" % "ua-client" % "1.0.2"
 
 lazy val hcd2OpcServer = project
   .settings(packageSettings("Demo OPC UA Server", "Demo OPC UA Server"): _*)
-  .settings(libraryDependencies ++= Seq(uaServer))
+  .settings(libraryDependencies ++= Seq(uaServer, log))
 
 lazy val hcd2OpcClient = project
   .settings(packageSettings("HCD OPC UA demo", "HCD demo"): _*)

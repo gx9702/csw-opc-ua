@@ -4,7 +4,7 @@ import akka.actor.Props
 import com.typesafe.config.{ ConfigFactory, Config }
 import csw.services.ccs.PeriodicHcdController
 import csw.services.pkg.{ LifecycleHandler, Hcd }
-import csw.util.cfg.Key
+import csw.util.cfg.{ StandardKeys, Key }
 
 // A test HCD that is configured with the given name and config path
 object Hcd2 {
@@ -22,10 +22,7 @@ object Hcd2 {
  * @param config config file with settings for the HCD
  */
 case class Hcd2(name: String, config: Config) extends Hcd with PeriodicHcdController with LifecycleHandler {
-  val prefix = if (config.hasPath("prefix")) config.getString("prefix") else {
-    // Normally the HCD would know its prefix, but for the test we are reusing the same class for two HCDs
-    if (name == "HCD-2A") "tcs.mobie.blue.filter" else "tcs.mobie.blue.disperser"
-  }
+  val prefix = if (name == "HCD-2A") StandardKeys.filterPrefix else StandardKeys.disperserPrefix
   val worker = context.actorOf(Hcd2Worker.props(prefix))
 
   // Reads the "rate" from the config file and starts the periodic processing

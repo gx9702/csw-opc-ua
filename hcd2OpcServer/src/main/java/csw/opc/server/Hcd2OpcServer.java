@@ -19,18 +19,18 @@ import com.digitalpetri.opcua.stack.core.types.structured.UserTokenPolicy;
 
 import static com.google.common.collect.Lists.newArrayList;
 
-public class ServerExample {
+public class Hcd2OpcServer {
 
     public static void main(String[] args) throws ExecutionException, InterruptedException {
-        ServerExample serverExample = new ServerExample();
-        serverExample.startup();
+        Hcd2OpcServer server = new Hcd2OpcServer();
+        server.startup();
 
-        serverExample.shutdownFuture().get();
+        server.shutdownFuture().get();
     }
 
     private final OpcUaServer server;
 
-    public ServerExample() {
+    public Hcd2OpcServer() {
         UsernameIdentityValidator identityValidator = new UsernameIdentityValidator(
                 true, // allow anonymous access
                 authenticationChallenge ->
@@ -63,6 +63,9 @@ public class ServerExample {
         server.getNamespaceManager().registerAndAdd(
                 Hcd2Namespace.NAMESPACE_URI,
                 idx -> new Hcd2Namespace(server, idx));
+
+//        // XXX
+//        Namespace ns = server.getNamespaceManager().getNamespace(2);
     }
 
     public void startup() {

@@ -10,6 +10,9 @@ import scala.sys.process._
 // Start the OPC-UA based hardware simulation
 "hcd2OpcServer".run
 
+// Make sure server is up and running before continuing
+Thread.sleep(2000)
+
 // Start the containers with the default configuration
 "container1".run
 "container2opc".run
