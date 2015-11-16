@@ -38,7 +38,6 @@ val buildSettings = Seq(
 
 lazy val defaultSettings = buildSettings ++ formatSettings ++ Seq(
   scalacOptions ++= Seq("-target:jvm-1.8", "-encoding", "UTF-8", "-feature", "-deprecation", "-unchecked"),
-//  javacOptions ++= Seq("-source", "1.8", "-target", "1.8", "-Xlint:unchecked", "-Xlint:deprecation")
   javacOptions in Compile ++= Seq("-source", "1.8"),
   javacOptions in (Compile, compile) ++= Seq("-target", "1.8", "-Xlint:all", "-Xlint:-options", "-Werror")
 )
