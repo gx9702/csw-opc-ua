@@ -40,7 +40,9 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
       val s = v.getValue.getValue.toString
       log.info(s"HCD subscriber: value for $name received: $s")
 
-      svs.set(CurrentState(prefix).set(key, s))
+      // Normally we would react to the OPC variable being set, but in order
+      // to simulate a delay, this is done below when the telemetry indicates it is done
+      //      svs.set(CurrentState(prefix).set(key, s))
     }
   })
 
@@ -55,6 +57,10 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
       // Note: Could alternatively use a different key or data type for the telemetry,
       // here we use the filter or disperser keys
       telemetryService.set(StatusEvent(prefix).set(key, choice))
+
+      // Doing this here to simulate the delay
+      svs.set(CurrentState(prefix).set(key, choice))
+
     }
   })
 

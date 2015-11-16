@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 import com.digitalpetri.opcua.sdk.core.AccessLevel;
 import com.digitalpetri.opcua.sdk.core.Reference;
@@ -62,25 +63,6 @@ public class Hcd2Namespace implements UaNamespace {
             "z_G0304",
             "Z_G0322",
             "Y_G0323",
-            "GG455_G0305",
-            "OG515_G0306",
-            "RG610_G0307",
-            "CaT_G0309",
-            "Ha_G0310",
-            "HaC_G0311",
-            "DS920_G0312",
-            "SII_G0317",
-            "OIII_G0318",
-            "OIIIC_G0319",
-            "HeII_G0320",
-            "HeIIC_G0321",
-            "HartmannA_G0313 + r_G0303",
-            "HartmannB_G0314 + r_G0303",
-            "g_G0301 + GG455_G0305",
-            "g_G0301 + OG515_G0306",
-            "r_G0303 + RG610_G0307",
-            "i_G0302 + CaT_G0309",
-            "z_G0304 + CaT_G0309",
             "u_G0308"
     };
 
@@ -365,12 +347,6 @@ public class Hcd2Namespace implements UaNamespace {
             try {
                 Variant variant = writeValue.getValue().getValue();
                 String value = variant != null ? variant.getValue().toString() : null;
-                // XXX React when the filter value is set
-                if (writeValue.getNodeId().equals(filterNodeId)) {
-                    simulateDemandDelay("filter", value, filterPosNodeId, FILTERS);
-                } else if (writeValue.getNodeId().equals(disperserNodeId)) {
-                    simulateDemandDelay("disperser", value, disperserPosNodeId, DISPERSERS);
-                }
 
                 UaNode node = Optional.ofNullable(nodes.get(writeValue.getNodeId()))
                         .orElseThrow(() -> new UaException(StatusCodes.Bad_NodeIdUnknown));
@@ -386,6 +362,13 @@ public class Hcd2Namespace implements UaNamespace {
                             value, writeValue.getAttributeId(), writeValue.getNodeId());
                 }
 
+                // React when the filter or disperser value is set to simulate wheel moving slowly
+                if (writeValue.getNodeId().equals(filterNodeId)) {
+                    incFilterPos();
+                } else if (writeValue.getNodeId().equals(disperserNodeId)) {
+                    incDisperserPos();
+                }
+
                 results.add(StatusCode.GOOD);
             } catch (UaException e) {
                 results.add(e.getStatusCode());
@@ -395,23 +378,36 @@ public class Hcd2Namespace implements UaNamespace {
         context.complete(results);
     }
 
-    // Simulate the filter or disperser wheel turning past different settings on its
-    // way to the demand setting...
-    private void simulateDemandDelay(String name, String value, NodeId posNodeId, String[] choices) {
-        logger.info("Setting " + name + " to = " + value);
-        UaVariableNode node = (UaVariableNode)nodes.get(posNodeId);
-        int currentPos = (Integer)node.getValue().getValue().getValue();
-        while (!choices[currentPos].equals(value)) {
-            try {
-                Thread.sleep(500);
-            } catch (Exception ex) {
-                logger.error("Can't sleep", ex);
+    private void incFilterPos() {
+        UaVariableNode filterNode = (UaVariableNode)nodes.get(filterNodeId);
+        UaVariableNode filterPosNode = (UaVariableNode)nodes.get(filterPosNodeId);
+        String filter = (String)filterNode.getValue().getValue().getValue();
+        int filterPos = (Integer)filterPosNode.getValue().getValue().getValue();
+        if (!FILTERS[filterPos].equals(filter)) {
+            filterPos = (filterPos + 1) % FILTERS.length;
+            logger.info("Setting filterPos  to = " + filterPos);
+            filterPosNode.setValue(new DataValue(new Variant(filterPos)));
+            if (!FILTERS[filterPos].equals(filter)) {
+                server.getScheduledExecutorService().schedule(this::incFilterPos, 1000L, TimeUnit.MILLISECONDS);
             }
-            currentPos = (currentPos + 1) % choices.length;
-            logger.info("Setting " + name + "Pos  to = " + currentPos);
-            node.setValue(new DataValue(new Variant(currentPos)));
         }
     }
+
+    private void incDisperserPos() {
+        UaVariableNode disperserNode = (UaVariableNode)nodes.get(disperserNodeId);
+        UaVariableNode disperserPosNode = (UaVariableNode)nodes.get(disperserPosNodeId);
+        String disperser = (String)disperserNode.getValue().getValue().getValue();
+        int disperserPos = (Integer)disperserPosNode.getValue().getValue().getValue();
+        if (!DISPERSERS[disperserPos].equals(disperser)) {
+            disperserPos = (disperserPos + 1) % DISPERSERS.length;
+            logger.info("Setting disperserPos  to = " + disperserPos);
+            disperserPosNode.setValue(new DataValue(new Variant(disperserPos)));
+            if (!DISPERSERS[disperserPos].equals(disperser)) {
+                server.getScheduledExecutorService().schedule(this::incDisperserPos, 1000L, TimeUnit.MILLISECONDS);
+            }
+        }
+    }
+
 
     @Override
     public void onDataItemsCreated(List<DataItem> dataItems) {

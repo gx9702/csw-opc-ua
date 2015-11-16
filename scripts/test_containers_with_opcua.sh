@@ -11,7 +11,7 @@ import scala.sys.process._
 "hcd2OpcServer".run
 
 // Make sure server is up and running before continuing
-Thread.sleep(2000)
+Thread.sleep(3000)
 
 // Start the containers with the default configuration
 "container1".run
