@@ -11,8 +11,10 @@ Dependency on other CSW Projects
 --------------------------------
 
 This project depends on the main csw project as well as the csw-pkg-demo project, 
-so you should run install.sh in csw/csw and csw-pkg-demo to install the necessary jars
+so you should run install.sh in csw and csw-pkg-demo to install the necessary jars
 and commands in the ../install directory.
+
+To use the web app, you will need to run install.sh in csw-play-demo.
 
 
 Sbt Build
@@ -23,14 +25,19 @@ To compile, run ./install.sh in this directory. This will install the necessary 
 Run the demo
 ------------
 
-To run the demo, cd to ../install/bin and run:
+To run the demo backend, cd to ../install/bin and run:
 
     test_containers_with_opcua.sh
+    
+Then to run the frontend for the browser web app, run:
 
-This script runs the OPC-UA hardware simulation code, and the two containers for the test.
+    demowebserver
+
+The first script runs the OPC-UA hardware simulation code, and the two containers for the test.
 Container1 (which contains Assembly1) is the same as the one in csw-pkg-demo.
-Container2opc contains the two OPC UA based HCDs. When you submit a config to Assembly,
-different parts of it are sent to the two HCDs (for filter and disperser).
+Container2opc contains the two OPC UA based HCDs. When you submit a config to Assembly (by
+pressing Apply in the web app),
+different parts of the config are sent to the two HCDs (for filter and disperser).
 The HCDs set variables in the OPC server (which is a demo application here, but would normally
 be provided by some hardware interface).
 
