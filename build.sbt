@@ -43,7 +43,7 @@ lazy val defaultSettings = buildSettings ++ formatSettings ++ Seq(
 )
 
 // For standalone applications
-def packageSettings(summary: String, desc: String) = defaultSettings ++
+def packageSettings(name: String, summary: String, desc: String) = defaultSettings ++
   packagerSettings ++ packageArchetype.java_application ++ Seq(
   version in Rpm := Version,
   rpmRelease := "0",
@@ -53,7 +53,7 @@ def packageSettings(summary: String, desc: String) = defaultSettings ++
   rpmGroup := Some("CSW"),
   packageSummary := summary,
   packageDescription := desc,
-  bashScriptExtraDefines ++= Seq(s"addJava -DCSW_VERSION=$Version -Dakka.loglevel=DEBUG")
+  bashScriptExtraDefines ++= Seq(s"addJava -DCSW_VERSION=$Version -Dakka.loglevel=DEBUG -Dapplication-name=$name")
 )
 
 // dependencies
@@ -64,14 +64,14 @@ val uaServer = "com.digitalpetri.opcua" % "ua-server" % "0.4.2"
 val uaClient = "com.digitalpetri.opcua" % "ua-client" % "1.0.2"
 
 lazy val hcd2OpcServer = project
-  .settings(packageSettings("Demo OPC UA Server", "Demo OPC UA Server"): _*)
+  .settings(packageSettings("hcd2OpcServer", "Demo OPC UA Server", "Demo OPC UA Server"): _*)
   .settings(libraryDependencies ++= Seq(uaServer, log))
 
 lazy val hcd2OpcClient = project
-  .settings(packageSettings("HCD OPC UA demo", "HCD demo"): _*)
+  .settings(packageSettings("hcd2OpcClient", "HCD OPC UA demo", "HCD demo"): _*)
   .settings(libraryDependencies ++= Seq(pkg, uaClient))
   .dependsOn(hcd2OpcServer)
 
 lazy val container2Opc = project
-  .settings(packageSettings("Container OPC UA demo", "Example container"): _*)
+  .settings(packageSettings("container2Opc", "Container OPC UA demo", "Example container"): _*)
   .settings(libraryDependencies ++= Seq(containerCmd)) dependsOn hcd2OpcClient
