@@ -8,7 +8,7 @@ exec scala "$0" "$@"
 import scala.sys.process._
 
 // Start the OPC-UA based hardware simulation
-"hcd2OpcServer".run
+"hcd2opcserver".run
 
 // Start the containers with the default configuration
 "container1".run
