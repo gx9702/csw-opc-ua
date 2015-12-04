@@ -71,5 +71,8 @@ a config has been "matched" and then returns the command status to the original 
 If multiple users are accessing the web app at the same time, they will all see the same
 telemetry values.
 
+The following diagram shows the high level relationships of the various assemblies and HCDs in this demo:
+
+![OpcTest diagram](doc/OpcTest.jpg)
 
 
