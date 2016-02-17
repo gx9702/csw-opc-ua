@@ -3,7 +3,7 @@ package csw.opcDemo.hcd2
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import csw.services.loc.{ ServiceType, ServiceId }
+import csw.services.loc.{ServiceType, ServiceId}
 import csw.services.pkg.Component
 
 /**

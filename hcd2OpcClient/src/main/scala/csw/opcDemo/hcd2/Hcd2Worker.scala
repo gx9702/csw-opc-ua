@@ -5,7 +5,7 @@ import java.util.function.Consumer
 import akka.actor._
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue
 import csw.opc.server.Hcd2Namespace
-import csw.services.kvs.{ TelemetryService, StateVariableStore, KvsSettings }
+import csw.services.kvs.{TelemetryService, StateVariableStore, KvsSettings}
 import csw.util.cfg.Configurations.StateVariable.CurrentState
 import csw.util.cfg.Configurations._
 import csw.util.cfg.Events.StatusEvent
