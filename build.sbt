@@ -7,6 +7,7 @@ import Settings._
 lazy val hcd2OpcServer = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("hcd2OpcServer", "Demo OPC UA Server", "Demo OPC UA Server"): _*)
+  .settings(mainClass in Compile := Some("csw.opc.server.Hcd2OpcServer"))
   .settings(libraryDependencies ++= Seq(uaServer, log))
 
 lazy val hcd2OpcClient = project

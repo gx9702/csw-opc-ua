@@ -2,29 +2,27 @@ package csw.opcDemo.hcd2
 
 import java.io.File
 
-import com.typesafe.config.ConfigFactory
-import csw.services.loc.{ServiceType, ServiceId}
-import csw.services.pkg.Component
+import csw.services.loc.ConnectionType.AkkaType
+import csw.services.loc._
+import csw.services.pkg.Supervisor
+import csw.services.pkg.Component.{HcdInfo, RegisterOnly}
+import scala.concurrent.duration._
 
 /**
  * Starts Hcd2 as a standalone application.
- * Args: name ("HCD-2A" or "HCD-2B"),
- * optional config file (defines rate, prefix, other component-specific keys)
+ * Args: HCD-name: one of (HCD-2A, HCD-2B)
  */
 object Hcd2App extends App {
-  if (args.length != 1 && args.length != 2) {
-    println("Expected one or two args: the HCD name and an optional config file with HCD settings")
+  if (args.length != 1) {
+    println("Expected one argument: the HCD name")
     System.exit(1)
   }
-  val name = args(0)
-  val config = if (args.length == 1) ConfigFactory.empty() else ConfigFactory.parseFile(new File(args(1)))
-  val prefix = if (config.hasPath("prefix")) config.getString("prefix")
-  else {
-    // Normally the HCD would know its prefix, but for the test we are reusing the same class for two HCDs
-    if (name == "HCD-2A") "tcs.mobie.blue.filter" else "tcs.mobie.blue.disperser"
-  }
-  val props = Hcd2.props(name, config)
-  val serviceId = ServiceId(name, ServiceType.HCD)
-  val services = Nil
-  Component.create(props, serviceId, prefix, services)
+  LocationService.initInterface()
+  val hcdName = args(0)
+  val prefix = if (hcdName == "HCD-2A") "tcs.mobie.blue.filter" else "tcs.mobie.blue.disperser"
+  val className = "csw.opcDemo.hcd2.Hcd2"
+  val componentId = ComponentId(hcdName, ComponentType.HCD)
+  val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)
+  val supervisor = Supervisor(hcdInfo)
+
 }
