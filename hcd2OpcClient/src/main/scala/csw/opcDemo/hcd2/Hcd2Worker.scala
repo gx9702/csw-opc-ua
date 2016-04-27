@@ -8,7 +8,6 @@ import csw.opc.server.Hcd2Namespace
 import csw.services.kvs.{TelemetryService, StateVariableStore, KvsSettings}
 import csw.util.cfg.Configurations.StateVariable.CurrentState
 import csw.util.cfg.Configurations._
-import csw.util.cfg.Events.StatusEvent
 import csw.util.cfg.StandardKeys
 import scala.concurrent.duration._
 
@@ -20,6 +19,8 @@ object Hcd2Worker {
   // Message used to try/retry to connect to the OPC server
   case object TryOpcConnection
 
+  // Message requesting current state of HCD values
+  case object RequestCurrentState
 }
 
 /**
@@ -45,16 +46,21 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
   override def receive: Receive = Actor.emptyBehavior
 
   // State while waiting for a connection to the OPC UA server
-  def waitingForOpcServer: Receive = {
+  private def waitingForOpcServer: Receive = {
     case TryOpcConnection ⇒ tryOpcConnection()
     case s: SetupConfig   ⇒ log.error("Not connected to OPC server")
     case x                ⇒ log.error(s"Unexpected message $x")
   }
 
   // State while connected to the OPC server
-  def connected(opcClient: Hcd2OpcUaClient): Receive = {
+  private def connected(opcClient: Hcd2OpcUaClient, currentPos: String): Receive = {
     case s: SetupConfig ⇒ submit(s, opcClient)
-    case x              ⇒ log.error(s"Unexpected message $x")
+
+    // Send the parent the current state
+    case RequestCurrentState ⇒
+      context.parent ! CurrentState(prefix).set(key, currentPos)
+
+    case x ⇒ log.error(s"Unexpected message $x")
   }
 
   private def tryOpcConnection(): Unit = {
@@ -66,10 +72,6 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
         override def accept(v: DataValue): Unit = {
           val s = v.getValue.getValue.toString
           log.info(s"HCD subscriber: value for $name received: $s")
-
-          // Normally we would react to the OPC variable being set, but in order
-          // to simulate a delay, this is done below when the telemetry indicates it is done
-          //      svs.set(CurrentState(prefix).set(key, s))
         }
       })
 
@@ -79,19 +81,14 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
         override def accept(v: DataValue): Unit = {
           val pos = v.getValue.getValue.asInstanceOf[Int]
           val choice = choices(pos)
+          context.become(connected(opcClient, choice))
           log.info(s"HCD subscriber: value for ${name}Pos received: $choice")
-
-          // Note: Could alternatively use a different key or data type for the telemetry,
-          // here we use the filter or disperser keys
-          telemetryService.set(StatusEvent(prefix).set(key, choice))
-
-          // Doing this here to simulate the delay
-          svs.set(CurrentState(prefix).set(key, choice))
+          context.parent ! CurrentState(prefix).set(key, choice)
         }
       })
 
       log.info(s"$name: Connected to OPC server")
-      context.become(connected(opcClient))
+      context.become(connected(opcClient, choices(0)))
     } catch {
       case ex: Exception ⇒
         // Retry the connection in a second
