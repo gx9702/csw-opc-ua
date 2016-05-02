@@ -6,7 +6,7 @@ import akka.actor._
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue
 import csw.opc.server.Hcd2Namespace
 import csw.services.kvs.{TelemetryService, StateVariableStore, KvsSettings}
-import csw.util.cfg.Configurations.StateVariable.CurrentState
+import csw.util.cfg.StateVariable.CurrentState
 import csw.util.cfg.Configurations._
 import csw.util.cfg.StandardKeys
 import scala.concurrent.duration._
