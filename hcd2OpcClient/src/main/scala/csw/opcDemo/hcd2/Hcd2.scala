@@ -7,14 +7,6 @@ import csw.services.pkg.Supervisor._
 import csw.services.pkg.{Hcd, LifecycleHandler}
 import csw.util.cfg.Configurations.SetupConfig
 
-// A test HCD that is configured with the given name and config path
-object Hcd2 {
-  /**
-   * Used to create the actor
-   */
-  def props(info: HcdInfo): Props = Props(classOf[Hcd2], info)
-}
-
 /**
  * Test HCD
  */

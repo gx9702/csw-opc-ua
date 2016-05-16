@@ -5,7 +5,6 @@ import java.util.function.Consumer
 import akka.actor._
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue
 import csw.opc.server.Hcd2Namespace
-import csw.services.kvs.{TelemetryService, StateVariableStore, KvsSettings}
 import csw.util.cfg.StateVariable.CurrentState
 import csw.util.cfg.Configurations._
 import csw.util.cfg.StandardKeys
@@ -32,9 +31,6 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
 
   log.info(s"Started worker for $prefix")
 
-  val settings = KvsSettings(context.system)
-  val svs = StateVariableStore(settings)
-  val telemetryService = TelemetryService(settings)
   val name = prefix.split('.').last
   val choices = if (name == "filter") Hcd2Namespace.FILTERS else Hcd2Namespace.DISPERSERS
   val key = if (prefix == StandardKeys.filterPrefix) StandardKeys.filter else StandardKeys.disperser

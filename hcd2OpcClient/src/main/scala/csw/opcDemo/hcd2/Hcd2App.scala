@@ -24,5 +24,4 @@ object Hcd2App extends App {
   val componentId = ComponentId(hcdName, ComponentType.HCD)
   val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)
   val supervisor = Supervisor(hcdInfo)
-
 }

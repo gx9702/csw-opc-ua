@@ -135,13 +135,4 @@ public class Hcd2OpcUaClient {
             logger.error("Write '{}' failed for nodeId={}", v, nodeIds.get(0));
         }
     }
-
-//    // XXX Hack - Step through the filter values, as if turning the wheel,
-//    // until the demand value is reached.
-//    // (Wanted to do this on the OPC server, but couldn't figure it out yet)
-//    public void setValue(String name, Object value) throws Exception {
-//        // XXX TODO...
-//        simpleSetValue(name, value);
-//    }
-
 }
