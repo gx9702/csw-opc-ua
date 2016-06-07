@@ -5,9 +5,8 @@ import java.util.function.Consumer
 import akka.actor._
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue
 import csw.opc.server.Hcd2Namespace
-import csw.util.cfg.StateVariable.CurrentState
-import csw.util.cfg.Configurations._
-import csw.util.cfg.StandardKeys
+import csw.util.config.StateVariable.CurrentState
+import csw.util.config.Configurations._
 import scala.concurrent.duration._
 
 import scala.language.postfixOps
@@ -27,13 +26,14 @@ object Hcd2Worker {
  */
 class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
   import context.dispatcher
+  import Hcd2._
   import Hcd2Worker._
 
   log.info(s"Started worker for $prefix")
 
   val name = prefix.split('.').last
   val choices = if (name == "filter") Hcd2Namespace.FILTERS else Hcd2Namespace.DISPERSERS
-  val key = if (prefix == StandardKeys.filterPrefix) StandardKeys.filter else StandardKeys.disperser
+  val key = if (prefix == filterPrefix) filterKey else disperserKey
 
   // We can't do anything until the OPC UA server is available
   context.become(waitingForOpcServer)
@@ -97,7 +97,7 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
    * Called when a configuration is submitted
    */
   def submit(setupConfig: SetupConfig, opcClient: Hcd2OpcUaClient): Unit = {
-    setupConfig.get(key).foreach { value ⇒
+    setupConfig.get(key, 0).foreach { value ⇒
       opcClient.setValue(name, value)
     }
   }
