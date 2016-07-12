@@ -8,6 +8,7 @@ import csw.opc.server.Hcd2Namespace
 import csw.util.config.StateVariable.CurrentState
 import csw.util.config.Configurations._
 import scala.concurrent.duration._
+import csw.util.config.ConfigDSL._
 
 import scala.language.postfixOps
 
@@ -54,7 +55,7 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
 
     // Send the parent the current state
     case RequestCurrentState ⇒
-      context.parent ! CurrentState(prefix).set(key, currentPos)
+      context.parent ! cs(prefix, key → currentPos)
 
     case x ⇒ log.error(s"Unexpected message $x")
   }
@@ -79,7 +80,7 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
           val choice = choices(pos)
           context.become(connected(opcClient, choice))
           log.info(s"HCD subscriber: value for ${name}Pos received: $choice")
-          context.parent ! CurrentState(prefix).set(key, choice)
+          context.parent ! cs(prefix, key → choice)
         }
       })
 
@@ -97,8 +98,8 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
    * Called when a configuration is submitted
    */
   def submit(setupConfig: SetupConfig, opcClient: Hcd2OpcUaClient): Unit = {
-    setupConfig.get(key, 0).foreach { value ⇒
-      opcClient.setValue(name, value)
+    setupConfig.get(key).foreach { value ⇒
+      opcClient.setValue(name, value.head)
     }
   }
 }
