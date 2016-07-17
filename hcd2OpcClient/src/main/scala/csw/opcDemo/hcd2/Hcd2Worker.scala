@@ -44,20 +44,20 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
 
   // State while waiting for a connection to the OPC UA server
   private def waitingForOpcServer: Receive = {
-    case TryOpcConnection ⇒ tryOpcConnection()
-    case s: SetupConfig   ⇒ log.error("Not connected to OPC server")
-    case x                ⇒ log.error(s"Unexpected message $x")
+    case TryOpcConnection => tryOpcConnection()
+    case s: SetupConfig   => log.error("Not connected to OPC server")
+    case x                => log.error(s"Unexpected message $x")
   }
 
   // State while connected to the OPC server
   private def connected(opcClient: Hcd2OpcUaClient, currentPos: String): Receive = {
-    case s: SetupConfig ⇒ submit(s, opcClient)
+    case s: SetupConfig => submit(s, opcClient)
 
     // Send the parent the current state
-    case RequestCurrentState ⇒
-      context.parent ! cs(prefix, key → currentPos)
+    case RequestCurrentState =>
+      context.parent ! cs(prefix, key -> currentPos)
 
-    case x ⇒ log.error(s"Unexpected message $x")
+    case x => log.error(s"Unexpected message $x")
   }
 
   private def tryOpcConnection(): Unit = {
@@ -80,14 +80,14 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
           val choice = choices(pos)
           context.become(connected(opcClient, choice))
           log.info(s"HCD subscriber: value for ${name}Pos received: $choice")
-          context.parent ! cs(prefix, key → choice)
+          context.parent ! cs(prefix, key -> choice)
         }
       })
 
       log.info(s"$name: Connected to OPC server")
       context.become(connected(opcClient, choices(0)))
     } catch {
-      case ex: Exception ⇒
+      case ex: Exception =>
         // Retry the connection in a second
         log.warning(s"$name: Failed to connect to OPC server (${ex.getMessage}). Will retry in 1 sec.")
         context.system.scheduler.scheduleOnce(1.second, self, TryOpcConnection)
@@ -98,7 +98,7 @@ class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
    * Called when a configuration is submitted
    */
   def submit(setupConfig: SetupConfig, opcClient: Hcd2OpcUaClient): Unit = {
-    setupConfig.get(key).foreach { value ⇒
+    setupConfig.get(key).foreach { value =>
       opcClient.setValue(name, value.head)
     }
   }
