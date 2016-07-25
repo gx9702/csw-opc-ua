@@ -5,8 +5,9 @@ import java.util.function.Consumer
 import akka.actor._
 import com.digitalpetri.opcua.stack.core.types.builtin.DataValue
 import csw.opc.server.Hcd2Namespace
-import csw.util.config.StateVariable.CurrentState
+import csw.services.log.PrefixedActorLogging
 import csw.util.config.Configurations._
+
 import scala.concurrent.duration._
 import csw.util.config.ConfigDSL._
 
@@ -25,7 +26,7 @@ object Hcd2Worker {
 /**
  * An actor that does the work of matching a configuration
  */
-class Hcd2Worker(prefix: String) extends Actor with ActorLogging {
+class Hcd2Worker(override val prefix: String) extends Actor with PrefixedActorLogging {
   import context.dispatcher
   import Hcd2._
   import Hcd2Worker._
