@@ -33,9 +33,9 @@ class Hcd2Worker(override val prefix: String) extends Actor with PrefixedActorLo
 
   log.info(s"Started worker for $prefix")
 
-  val name = prefix.split('.').last
-  val choices = if (name == "filter") Hcd2Namespace.FILTERS else Hcd2Namespace.DISPERSERS
-  val key = if (prefix == filterPrefix) filterKey else disperserKey
+  private val name = prefix.split('.').last
+  private val choices = if (name == "filter") Hcd2Namespace.FILTERS else Hcd2Namespace.DISPERSERS
+  private val key = if (prefix == filterPrefix) filterKey else disperserKey
 
   // We can't do anything until the OPC UA server is available
   context.become(waitingForOpcServer)
@@ -46,7 +46,7 @@ class Hcd2Worker(override val prefix: String) extends Actor with PrefixedActorLo
   // State while waiting for a connection to the OPC UA server
   private def waitingForOpcServer: Receive = {
     case TryOpcConnection => tryOpcConnection()
-    case s: SetupConfig   => log.error("Not connected to OPC server")
+    case _: SetupConfig   => log.error("Not connected to OPC server")
     case x                => log.error(s"Unexpected message $x")
   }
 
