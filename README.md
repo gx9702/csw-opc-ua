@@ -1,6 +1,8 @@
 CSW OPC UA Demo
 =============
 
+#### Note: This project is not currently up to date with the csw master branch. It will be updated later.
+
 This package contains demo code showing how OPC UA can be used in HCDs to control 
 hardware (assuming there is an OPC UA server for the hardware).
 
