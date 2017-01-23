@@ -2,7 +2,7 @@ package csw.opcDemo.hcd2
 
 import csw.services.loc.ConnectionType.AkkaType
 import csw.services.loc._
-import csw.services.pkg.Supervisor3
+import csw.services.pkg.Supervisor
 import csw.services.pkg.Component.{HcdInfo, RegisterOnly}
 
 import scala.concurrent.duration._
@@ -22,5 +22,5 @@ object Hcd2App extends App {
   private val className = "csw.opcDemo.hcd2.Hcd2"
   private val componentId = ComponentId(hcdName, ComponentType.HCD)
   private val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)
-  Supervisor3(hcdInfo)
+  Supervisor(hcdInfo)
 }

@@ -3,21 +3,21 @@ package csw.opcDemo.hcd2
 import akka.actor.ActorRef
 import csw.services.ccs.HcdController
 import csw.services.pkg.Component.HcdInfo
-import csw.services.pkg.Supervisor3.{Initialized, Started}
-import csw.services.pkg.{Hcd, LifecycleHandler}
+import csw.services.pkg.Supervisor.{Initialized, Started}
+import csw.services.pkg.Hcd
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.StringKey
 
 /**
  * Test HCD
  */
-case class Hcd2(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdController with LifecycleHandler {
+case class Hcd2(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdController {
   private val worker = context.actorOf(Hcd2Worker.props(info.prefix))
 
   supervisor ! Initialized
   supervisor ! Started
 
-  override def receive: Receive = controllerReceive orElse lifecycleHandlerReceive
+  override def receive: Receive = controllerReceive
 
   // Send the config to the worker for processing
   override protected def process(config: SetupConfig): Unit = {
