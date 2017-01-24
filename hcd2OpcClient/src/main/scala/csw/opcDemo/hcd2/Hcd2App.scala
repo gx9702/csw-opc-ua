@@ -17,10 +17,10 @@ object Hcd2App extends App {
     System.exit(1)
   }
   LocationService.initInterface()
-  val hcdName = args(0)
-  val prefix = if (hcdName == "HCD-2A") Hcd2.filterPrefix else Hcd2.disperserPrefix
-  val className = "csw.opcDemo.hcd2.Hcd2"
-  val componentId = ComponentId(hcdName, ComponentType.HCD)
-  val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)
-  val supervisor = Supervisor(hcdInfo)
+  private val hcdName = args(0)
+  private val prefix = if (hcdName == "HCD-2A") Hcd2.filterPrefix else Hcd2.disperserPrefix
+  private val className = "csw.opcDemo.hcd2.Hcd2"
+  private val componentId = ComponentId(hcdName, ComponentType.HCD)
+  private val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)
+  Supervisor(hcdInfo)
 }

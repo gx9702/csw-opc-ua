@@ -15,7 +15,6 @@ import com.digitalpetri.opcua.stack.core.application.CertificateValidator;
 import com.digitalpetri.opcua.stack.core.application.DefaultCertificateManager;
 import com.digitalpetri.opcua.stack.core.application.DefaultCertificateValidator;
 import com.digitalpetri.opcua.stack.core.types.builtin.LocalizedText;
-import com.digitalpetri.opcua.stack.core.types.structured.EndpointDescription;
 import com.digitalpetri.opcua.stack.core.types.structured.UserTokenPolicy;
 
 import static com.google.common.collect.Lists.newArrayList;
