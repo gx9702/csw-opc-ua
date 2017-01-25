@@ -1,26 +1,26 @@
 package csw.opcDemo.hcd2;
 
-import com.digitalpetri.opcua.sdk.client.OpcUaClient;
-import com.digitalpetri.opcua.sdk.client.api.config.OpcUaClientConfig;
-import com.digitalpetri.opcua.sdk.client.api.identity.AnonymousProvider;
-import com.digitalpetri.opcua.sdk.client.api.subscriptions.UaMonitoredItem;
-import com.digitalpetri.opcua.sdk.client.api.subscriptions.UaSubscription;
-import com.digitalpetri.opcua.stack.client.UaTcpStackClient;
-import com.digitalpetri.opcua.stack.core.AttributeId;
-import com.digitalpetri.opcua.stack.core.security.SecurityPolicy;
-import com.digitalpetri.opcua.stack.core.types.builtin.DataValue;
-import com.digitalpetri.opcua.stack.core.types.builtin.LocalizedText;
-import com.digitalpetri.opcua.stack.core.types.builtin.NodeId;
-import com.digitalpetri.opcua.stack.core.types.builtin.QualifiedName;
-import com.digitalpetri.opcua.stack.core.types.builtin.StatusCode;
-import com.digitalpetri.opcua.stack.core.types.builtin.Variant;
-import com.digitalpetri.opcua.stack.core.types.builtin.unsigned.UInteger;
-import com.digitalpetri.opcua.stack.core.types.enumerated.MonitoringMode;
-import com.digitalpetri.opcua.stack.core.types.enumerated.TimestampsToReturn;
-import com.digitalpetri.opcua.stack.core.types.structured.EndpointDescription;
-import com.digitalpetri.opcua.stack.core.types.structured.MonitoredItemCreateRequest;
-import com.digitalpetri.opcua.stack.core.types.structured.MonitoringParameters;
-import com.digitalpetri.opcua.stack.core.types.structured.ReadValueId;
+import org.eclipse.milo.opcua.sdk.client.OpcUaClient;
+import org.eclipse.milo.opcua.sdk.client.api.config.OpcUaClientConfig;
+import org.eclipse.milo.opcua.sdk.client.api.identity.AnonymousProvider;
+import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaMonitoredItem;
+import org.eclipse.milo.opcua.sdk.client.api.subscriptions.UaSubscription;
+import org.eclipse.milo.opcua.stack.client.UaTcpStackClient;
+import org.eclipse.milo.opcua.stack.core.AttributeId;
+import org.eclipse.milo.opcua.stack.core.security.SecurityPolicy;
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue;
+import org.eclipse.milo.opcua.stack.core.types.builtin.LocalizedText;
+import org.eclipse.milo.opcua.stack.core.types.builtin.NodeId;
+import org.eclipse.milo.opcua.stack.core.types.builtin.QualifiedName;
+import org.eclipse.milo.opcua.stack.core.types.builtin.StatusCode;
+import org.eclipse.milo.opcua.stack.core.types.builtin.Variant;
+import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.UInteger;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.MonitoringMode;
+import org.eclipse.milo.opcua.stack.core.types.enumerated.TimestampsToReturn;
+import org.eclipse.milo.opcua.stack.core.types.structured.EndpointDescription;
+import org.eclipse.milo.opcua.stack.core.types.structured.MonitoredItemCreateRequest;
+import org.eclipse.milo.opcua.stack.core.types.structured.MonitoringParameters;
+import org.eclipse.milo.opcua.stack.core.types.structured.ReadValueId;
 import com.google.common.collect.ImmutableList;
 import csw.opc.server.Hcd2Namespace;
 import org.slf4j.Logger;
@@ -32,7 +32,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
-import static com.digitalpetri.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
+import static org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.Unsigned.uint;
 import static com.google.common.collect.Lists.newArrayList;
 
 /**
@@ -46,44 +46,43 @@ public class Hcd2OpcUaClient {
     private final AtomicLong clientHandles = new AtomicLong(1L);
     private final OpcUaClient client;
 
-
     public Hcd2OpcUaClient() throws Exception {
         client = createClient();
         // synchronous connect
-        client.connect().get();  // FIXME
+        client.connect().get();
     }
 
     private OpcUaClient createClient() throws Exception {
         SecurityPolicy securityPolicy = SecurityPolicy.None;
 
-        String endpointUrl = "opc.tcp://localhost:12685";
-        EndpointDescription[] endpoints = UaTcpStackClient.getEndpoints(endpointUrl).get(); // FIXME
+        EndpointDescription[] endpoints = UaTcpStackClient.getEndpoints("opc.tcp://localhost:12686/example").get();
 
         EndpointDescription endpoint = Arrays.stream(endpoints)
-                .filter(e -> e.getSecurityPolicyUri().equals(securityPolicy.getSecurityPolicyUri()))
-                .findFirst().orElseThrow(() -> new Exception("no desired endpoints returned"));
+          .filter(e -> e.getSecurityPolicyUri().equals(securityPolicy.getSecurityPolicyUri()))
+          .findFirst().orElseThrow(() -> new Exception("no desired endpoints returned"));
 
         logger.info("Using endpoint: {} [{}]", endpoint.getEndpointUrl(), securityPolicy);
 
         loader.load();
 
         OpcUaClientConfig config = OpcUaClientConfig.builder()
-                .setApplicationName(LocalizedText.english("HCD2 opc-ua client"))
-                .setApplicationUri("urn:hcd2:opcua:client")
-                .setCertificate(loader.getClientCertificate())
-                .setKeyPair(loader.getClientKeyPair())
-                .setEndpoint(endpoint)
-                .setIdentityProvider(new AnonymousProvider())
-                .setRequestTimeout(uint(5000))
-                .build();
+          .setApplicationName(LocalizedText.english("eclipse milo opc-ua client"))
+          .setApplicationUri("urn:eclipse:milo:examples:client")
+          .setCertificate(loader.getClientCertificate())
+          .setKeyPair(loader.getClientKeyPair())
+          .setEndpoint(endpoint)
+          .setIdentityProvider(new AnonymousProvider())
+          .setRequestTimeout(uint(5000))
+          .build();
 
         return new OpcUaClient(config);
+
     }
 
     public void subscribe(String name, Consumer<DataValue> valueConsumer) throws Exception {
 
         // create a subscription and a monitored item
-        UaSubscription subscription = client.getSubscriptionManager().createSubscription(1000.0).get(); // FIXME
+        UaSubscription subscription = client.getSubscriptionManager().createSubscription(1000.0).get();
 
         NodeId nodeId = new NodeId(NAMESPACE, Hcd2Namespace.NAMESPACE_PREFIX + name);
 
@@ -104,7 +103,7 @@ public class Hcd2OpcUaClient {
                 readValueId, MonitoringMode.Reporting, parameters);
 
         List<UaMonitoredItem> items = subscription
-                .createMonitoredItems(TimestampsToReturn.Both, newArrayList(request)).get(); // FIXME
+                .createMonitoredItems(TimestampsToReturn.Both, newArrayList(request)).get();
 
         // do something with the value updates
         UaMonitoredItem item = items.get(0);
@@ -118,15 +117,13 @@ public class Hcd2OpcUaClient {
         // don't write status or timestamps
         DataValue dv = new DataValue(v, null, null);
 
-        NodeId nodeId = new NodeId(NAMESPACE, Hcd2Namespace.NAMESPACE_PREFIX + name);
-        List<NodeId> nodeIds = newArrayList(nodeId);
+        List<NodeId> nodeIds = ImmutableList.of(new NodeId(NAMESPACE, Hcd2Namespace.NAMESPACE_PREFIX + name));
 
         // write asynchronously....
-        CompletableFuture<List<StatusCode>> f =
-                client.writeValues(nodeIds, ImmutableList.of(dv));
+        CompletableFuture<List<StatusCode>> f = client.writeValues(nodeIds, ImmutableList.of(dv));
 
         // ...but block for the results so we write in order
-        List<StatusCode> statusCodes = f.get(); // FIXME
+        List<StatusCode> statusCodes = f.get();
         StatusCode status = statusCodes.get(0);
 
         if (status.isGood()) {

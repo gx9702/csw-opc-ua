@@ -11,13 +11,9 @@
  *   http://www.eclipse.org/org/documents/edl-v10.html.
  */
 
-package csw.opcDemo.hcd2;
+package csw.opc.server;
 
-import java.security.Key;
-import java.security.KeyPair;
-import java.security.KeyStore;
-import java.security.PrivateKey;
-import java.security.PublicKey;
+import java.security.*;
 import java.security.cert.X509Certificate;
 
 public class KeyStoreLoader {
@@ -33,7 +29,7 @@ public class KeyStoreLoader {
 
     public KeyStoreLoader load() throws Exception {
         KeyStore keyStore = KeyStore.getInstance("PKCS12");
-        keyStore.load(getClass().getClassLoader().getResourceAsStream("example-certs.pfx"), PASSWORD);
+        keyStore.load(getClass().getClassLoader().getResourceAsStream("server-example.pfx"), PASSWORD);
 
         Key clientPrivateKey = keyStore.getKey(CLIENT_ALIAS, PASSWORD);
         if (clientPrivateKey instanceof PrivateKey) {

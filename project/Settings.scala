@@ -7,6 +7,7 @@ import sbt._
 
 import scalariform.formatter.preferences._
 
+//noinspection TypeAnnotation
 // Defines the global build settings so they don't need to be edited everywhere
 object Settings {
 

@@ -3,13 +3,13 @@ package csw.opcDemo.hcd2
 import java.util.function.Consumer
 
 import akka.actor._
-import com.digitalpetri.opcua.stack.core.types.builtin.DataValue
 import csw.opc.server.Hcd2Namespace
 import csw.services.log.PrefixedActorLogging
 import csw.util.config.Configurations._
 
 import scala.concurrent.duration._
 import csw.util.config.ConfigDSL._
+import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue
 
 import scala.language.postfixOps
 
