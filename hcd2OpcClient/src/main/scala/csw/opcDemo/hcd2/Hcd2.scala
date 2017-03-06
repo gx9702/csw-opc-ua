@@ -3,7 +3,7 @@ package csw.opcDemo.hcd2
 import akka.actor.ActorRef
 import csw.services.ccs.HcdController
 import csw.services.pkg.Component.HcdInfo
-import csw.services.pkg.Supervisor.{Initialized, Started}
+import csw.services.pkg.Supervisor.Initialized
 import csw.services.pkg.Hcd
 import csw.util.config.Configurations.SetupConfig
 import csw.util.config.StringKey
@@ -15,7 +15,6 @@ case class Hcd2(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdControl
   private val worker = context.actorOf(Hcd2Worker.props(info.prefix))
 
   supervisor ! Initialized
-  supervisor ! Started
 
   override def receive: Receive = controllerReceive
 
