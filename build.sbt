@@ -20,3 +20,9 @@ lazy val container2Opc = project
   .enablePlugins(JavaAppPackaging)
   .settings(packageSettings("container2Opc", "Container OPC UA demo", "Example container"): _*)
   .settings(libraryDependencies ++= Seq(containerCmd)) dependsOn hcd2OpcClient
+
+lazy val opcUaHcd = project
+  .enablePlugins(JavaAppPackaging)
+  .settings(packageSettings("opcUaHcd", "OPC UA HCD (w/ real server)", "OPC UA HCD (w/ real server)"): _*)
+  .settings(libraryDependencies ++= Seq(pkg, ccs, uaClient))
+
