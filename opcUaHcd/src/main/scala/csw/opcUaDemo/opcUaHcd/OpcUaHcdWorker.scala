@@ -13,8 +13,8 @@ import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue
 
 import scala.language.postfixOps
 
-object OpcHcdWorker {
-  def props(prefix: String): Props = Props(classOf[OpcHcdWorker], prefix)
+object OpcUaHcdWorker {
+  def props(prefix: String): Props = Props(classOf[OpcUaHcdWorker], prefix)
 
   // Message used to try/retry to connect to the OPC server
   case object TryOpcConnection
@@ -26,10 +26,10 @@ object OpcHcdWorker {
 /**
  * An actor that does the work of matching a configuration
  */
-class OpcHcdWorker(override val prefix: String) extends Actor with PrefixedActorLogging {
+class OpcUaHcdWorker(override val prefix: String) extends Actor with PrefixedActorLogging {
   import context.dispatcher
-  import OpcHcd._
-  import OpcHcdWorker._
+  import OpcUaHcd._
+  import OpcUaHcdWorker._
 
   log.info(s"Started worker for $prefix")
 
@@ -37,19 +37,19 @@ class OpcHcdWorker(override val prefix: String) extends Actor with PrefixedActor
   private val key = StringKey("CylceCounter")
 
   // We can't do anything until the OPC UA server is available
-  context.become(waitingForOpcServer)
+  context.become(waitingForOpcUaServer)
   tryOpcConnection()
 
   override def receive: Receive = Actor.emptyBehavior
 
   // State while waiting for a connection to the OPC UA server
-  private def waitingForOpcServer: Receive = {
+  private def waitingForOpcUaServer: Receive = {
     case TryOpcConnection => tryOpcConnection()
-    case _: SetupConfig   => log.error("Not connected to OPC server")
+    case _: SetupConfig   => log.error("Not connected to OPC UA server")
     case x                => log.error(s"Unexpected message $x")
   }
 
-  // State while connected to the OPC server
+  // State while connected to the OPC UA server
   private def connected(opcClient: OpcUaHcdClient, currentPos: String): Receive = {
     case s: SetupConfig => submit(s, opcClient)
 
@@ -62,10 +62,10 @@ class OpcHcdWorker(override val prefix: String) extends Actor with PrefixedActor
 
   private def tryOpcConnection(): Unit = {
     try {
-      val opcClient = new OpcUaHcdClient()
+      val opcUaClient = new OpcUaHcdClient()
 
       // Subscribe to changes in the filter or disperser opcua variable and then update the state variable
-      opcClient.subscribe(name, new Consumer[DataValue] {
+      opcUaClient.subscribe(name, new Consumer[DataValue] {
         override def accept(v: DataValue): Unit = {
 
           val s = v.getValue.getValue.toString
@@ -73,8 +73,8 @@ class OpcHcdWorker(override val prefix: String) extends Actor with PrefixedActor
         }
       })
 
-      log.info(s"$name: Connected to OPC server")
-      context.become(connected(opcClient, "0"))
+      log.info(s"$name: Connected to OPC UA server")
+      context.become(connected(opcUaClient, "0"))
     } catch {
       case ex: Exception =>
         // Retry the connection in a second
@@ -86,9 +86,9 @@ class OpcHcdWorker(override val prefix: String) extends Actor with PrefixedActor
   /**
    * Called when a configuration is submitted
    */
-  def submit(setupConfig: SetupConfig, opcClient: OpcUaHcdClient): Unit = {
+  def submit(setupConfig: SetupConfig, opcUaClient: OpcUaHcdClient): Unit = {
     setupConfig.get(key).foreach { value =>
-      opcClient.setValue(name, value.head)
+      opcUaClient.setValue(name, value.head)
     }
   }
 }

@@ -19,7 +19,7 @@ object OpcUaHcdApp extends App {
   LocationService.initInterface()
   private val hcdName = args(0)
   private val prefix = "MAIN.CycleCounter"
-  private val className = "csw.opcDemo.opcHcd.OpcHcd"
+  private val className = "csw.opcUaDemo.opcUaHcd.OpcUaHcd"
   private val componentId = ComponentId(hcdName, ComponentType.HCD)
   private val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)
   Supervisor(hcdInfo)

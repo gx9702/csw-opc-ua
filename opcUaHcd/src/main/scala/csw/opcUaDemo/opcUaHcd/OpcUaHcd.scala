@@ -11,8 +11,8 @@ import csw.util.config.StringKey
 /**
  * Test HCD
  */
-case class OpcHcd(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdController {
-  private val worker = context.actorOf(OpcHcdWorker.props(info.prefix))
+case class OpcUaHcd(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdController {
+  private val worker = context.actorOf(OpcUaHcdWorker.props(info.prefix))
 
   supervisor ! Initialized
 
@@ -25,10 +25,10 @@ case class OpcHcd(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdContr
 
   // Ask the worker actor to send us the current state (handled by parent trait)
   override protected def requestCurrent(): Unit = {
-    worker ! OpcHcdWorker.RequestCurrentState
+    worker ! OpcUaHcdWorker.RequestCurrentState
   }
 }
 
-object OpcHcd {
- }
+object OpcUaHcd {
+}
 
