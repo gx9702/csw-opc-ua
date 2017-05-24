@@ -18,6 +18,8 @@ object Settings {
     version := Dependencies.Version,
     scalaVersion := Dependencies.ScalaVersion,
     crossPaths := true,
+    isSnapshot := true,
+    isSnapshot in ThisBuild := true,
     parallelExecution in Test := false,
     fork := true,
     resolvers += Resolver.typesafeRepo("releases"),
