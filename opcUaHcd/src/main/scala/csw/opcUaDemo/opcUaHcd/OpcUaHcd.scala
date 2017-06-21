@@ -5,8 +5,7 @@ import csw.services.ccs.HcdController
 import csw.services.pkg.Component.HcdInfo
 import csw.services.pkg.Supervisor.Initialized
 import csw.services.pkg.Hcd
-import csw.util.config.Configurations.SetupConfig
-import csw.util.config.StringKey
+import csw.util.param.Parameters.Setup
 
 /**
  * Test HCD
@@ -19,7 +18,7 @@ case class OpcUaHcd(info: HcdInfo, supervisor: ActorRef) extends Hcd with HcdCon
   override def receive: Receive = controllerReceive
 
   // Send the config to the worker for processing
-  override protected def process(config: SetupConfig): Unit = {
+  override protected def process(config: Setup): Unit = {
     worker ! config
   }
 
