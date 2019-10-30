@@ -9,7 +9,10 @@ import csw.util.config.Configurations._
 import scala.concurrent.duration._
 import csw.util.config.ConfigDSL._
 import csw.util.config.StringKey
+import org.eclipse.milo.opcua.sdk.core.NumericRange
+import org.eclipse.milo.opcua.stack.core.Identifiers
 import org.eclipse.milo.opcua.stack.core.types.builtin.DataValue
+import org.eclipse.milo.opcua.stack.core.types.builtin.unsigned.ULong
 
 import scala.language.postfixOps
 
@@ -34,7 +37,7 @@ class OpcUaHcdWorker(override val prefix: String) extends Actor with PrefixedAct
   log.info(s"Started worker for $prefix")
 
   private val name = prefix.split('.').last
-  private val key = StringKey("CylceCounter")
+  private val key = StringKey(name)
 
   // We can't do anything until the OPC UA server is available
   context.become(waitingForOpcUaServer)
@@ -65,13 +68,10 @@ class OpcUaHcdWorker(override val prefix: String) extends Actor with PrefixedAct
       val opcUaClient = new OpcUaHcdClient()
 
       // Subscribe to changes in the filter or disperser opcua variable and then update the state variable
-      opcUaClient.subscribe(name, new Consumer[DataValue] {
-        override def accept(v: DataValue): Unit = {
-
-          val s = v.getValue.getValue.toString
-          log.info(s"HCD subscriber: value for $name received: $s")
-        }
-      })
+      name match {
+        case "CycleCounter" => opcUaClient.subscribe (name, new CycleCounterConsumer () )
+        case "arrPublishedCounts" => opcUaClient.subscribe (name, new ArrayCountsConsumer () )
+      }
 
       log.info(s"$name: Connected to OPC UA server")
       context.become(connected(opcUaClient, "0"))
@@ -91,5 +91,61 @@ class OpcUaHcdWorker(override val prefix: String) extends Actor with PrefixedAct
       opcUaClient.setValue(name, value.head)
     }
   }
+
+  class ArrayCountsConsumer extends Consumer[DataValue] {
+    var counter: Option[ULong] = None
+
+    override def accept(v: DataValue): Unit = {
+
+      if (v.getValue.getDataType.get.equals(Identifiers.UInt64)) {
+        val newValue = v.getValue.getValue
+        log.debug(s"New value = $newValue")
+        val arr = NumericRange.readFromValueAtRange(v.getValue, NumericRange.parse("0:99")) match {
+          case x:Array[ULong] => {
+            if (counter.isEmpty) {
+              log.debug(s"Setting first value as ${x(0)}")
+              counter = Some(x(0))
+            }
+            for (i <- x) {
+              if (i != counter.get) {
+                log.error(s"Value is $i, expected ${counter.get}")
+              }
+              counter = Some(counter.get.add(1))
+            }
+          }
+          case _ => log.debug("not array?")
+        }
+      }
+    }
+  }
+
+  class CycleCounterConsumer extends Consumer[DataValue] {
+    var counter: Option[Long] = None
+
+    def accept(v: DataValue): Unit = {
+      if (v.getValue.getDataType.get.equals(Identifiers.UInt64)) {
+        val newValue = v.getValue.getValue.toString.toLong
+        if (counter.isDefined) {
+          /*
+        v.getValue.getDataType.get match {
+          case Identifiers.UInt16 => log.info("Value is a UInt16")
+          case Identifiers.UInt32 => log.info("Value is a UInt32")
+          case Identifiers.UInt64 => log.info("Value is a UInt64")
+          case other => log.info(s"Unknown Type $other")
+        }
+        */
+          val expectedValue = counter.get + 1
+          if (newValue != expectedValue) {
+            log.info(s"New value for $name is $newValue.  Expected $expectedValue")
+          }
+        }
+        counter = Some(newValue)
+      }
+      //val s = v.getValue.getValue.toString
+
+      //log.info(s"HCD subscriber: value for $name received: $s")
+    }
+  }
+
 }
 

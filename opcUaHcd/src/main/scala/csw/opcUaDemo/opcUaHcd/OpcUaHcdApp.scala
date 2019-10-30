@@ -13,12 +13,13 @@ import scala.concurrent.duration._
  */
 object OpcUaHcdApp extends App {
   if (args.length != 1) {
-    println("Expected one argument: the HCD name")
+    println("Expected one argument: the item subscribe to (e.g. MAIN.CycleCounter)")
     System.exit(1)
   }
   LocationService.initInterface()
-  private val hcdName = args(0)
-  private val prefix = "MAIN.CycleCounter"
+  private val hcdName = "testOpcUaHcd"
+//  private val prefix = "MAIN.CycleCounter"
+  private val prefix = args(0)
   private val className = "csw.opcUaDemo.opcUaHcd.OpcUaHcd"
   private val componentId = ComponentId(hcdName, ComponentType.HCD)
   private val hcdInfo = HcdInfo(hcdName, prefix, className, RegisterOnly, Set(AkkaType), 1.second)

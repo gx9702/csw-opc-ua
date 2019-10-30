@@ -57,7 +57,8 @@ public class OpcUaHcdClient {
     private OpcUaClient createClient() throws Exception {
         SecurityPolicy securityPolicy = SecurityPolicy.None;
 
-        EndpointDescription[] endpoints = UaTcpStackClient.getEndpoints("opc.tcp://131.215.210.228:4840").get();
+//        EndpointDescription[] endpoints = UaTcpStackClient.getEndpoints("opc.tcp://131.215.210.228:4840").get();
+        EndpointDescription[] endpoints = UaTcpStackClient.getEndpoints("opc.tcp://131.215.210.220:4840").get();
         for (EndpointDescription e: endpoints)
         {
             logger.info("Endpoint URL: {}", e.getEndpointUrl());
